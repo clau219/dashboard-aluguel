@@ -1,0 +1,2155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Dashboard — Casas de Aluguel</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#fff;--bg2:#f5f5f3;--bg3:#eeecea;
+  --text:#1a1a1a;--text2:#6b6b6b;--text3:#aaa;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+  --radius:8px;--radius-lg:12px;--blue:#185FA5;
+  --green-bg:#EAF3DE;--green-text:#27500A;
+  --amber-bg:#FAEEDA;--amber-text:#633806;
+  --red-bg:#FCEBEB;--red-text:#791F1F;
+  --info-bg:#E6F1FB;--info-text:#0C447C;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1e1e1e;--bg2:#2a2a2a;--bg3:#333;
+  --text:#f0f0f0;--text2:#aaa;--text3:#666;
+  --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.22);
+  --green-bg:#173404;--green-text:#C0DD97;
+  --amber-bg:#412402;--amber-text:#FAC775;
+  --red-bg:#501313;--red-text:#F09595;
+  --info-bg:#042C53;--info-text:#B5D4F4;
+}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:15px}
+
+/* ── Topbar ── */
+.topbar{background:var(--bg);border-bottom:.5px solid var(--border);padding:0 1rem;display:flex;align-items:center;gap:.5rem;position:sticky;top:0;z-index:100}
+.topbar-title{font-size:15px;font-weight:500;padding:.85rem 0;white-space:nowrap;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.nav-tabs{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{font-size:13px;padding:.9rem 13px;cursor:pointer;border:none;background:transparent;color:var(--text2);border-bottom:2px solid transparent;white-space:nowrap;flex-shrink:0}
+.nav-tab.active{color:var(--text);font-weight:500;border-bottom:2px solid var(--blue)}
+.nav-tab:hover{color:var(--text)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.save-badge{font-size:11px;color:var(--text3);padding:4px 8px;background:var(--bg2);border-radius:var(--radius);white-space:nowrap}
+.notif-btn{position:relative;background:transparent;border:none;cursor:pointer;font-size:18px;padding:4px 6px;color:var(--text2)}
+.notif-dot{position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:#E24B4A;border:1.5px solid var(--bg)}
+.reset-btn{font-size:12px;padding:4px 10px;border-radius:var(--radius);border:.5px solid #E24B4A;color:#A32D2D;background:transparent;cursor:pointer}
+.reset-btn:hover{background:var(--red-bg)}
+
+/* ── Layout ── */
+.container{max-width:1100px;margin:0 auto;padding:1.5rem}
+.page{display:none}.page.active{display:block}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.5rem}
+.metric{background:var(--bg2);border-radius:var(--radius);padding:.9rem 1rem;cursor:default}
+.metric .label{font-size:12px;color:var(--text2);margin-bottom:4px}
+.metric .value{font-size:22px;font-weight:500}
+.metric .sub{font-size:11px;color:var(--text3);margin-top:3px}
+.up{color:#3B6D11}.down{color:#A32D2D}.neutral{color:var(--text2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1rem}
+@media(max-width:680px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;margin-bottom:1rem}
+.sec-title{font-size:12px;font-weight:500;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.section-head .sec-title{margin-bottom:0}
+
+/* ── Botões ── */
+.house-sel{display:flex;gap:6px;margin-bottom:1.2rem;flex-wrap:wrap}
+.house-btn{font-size:13px;padding:5px 14px;border-radius:var(--radius);border:.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:background .15s}
+.house-btn.active{background:var(--bg2);color:var(--text);font-weight:500}
+.icon-btn{background:transparent;border:none;cursor:pointer;color:var(--text3);font-size:15px;padding:2px 6px;border-radius:4px}
+.icon-btn:hover{color:var(--text);background:var(--bg2)}
+.icon-btn.del:hover{color:#A32D2D;background:var(--red-bg)}
+.btn-export{font-size:12px;padding:5px 12px;border-radius:var(--radius);border:.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-export:hover{background:var(--bg2);color:var(--text)}
+
+/* ── Calendário ── */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-nav-title{font-size:14px;font-weight:500}
+.cal-nav-btn{background:transparent;border:.5px solid var(--border2);border-radius:var(--radius);padding:4px 10px;cursor:pointer;color:var(--text2);font-size:14px}
+.cal-nav-btn:hover{background:var(--bg2);color:var(--text)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:12px}
+.cal-head{color:var(--text3);text-align:center;padding:3px 0;font-weight:500}
+.cal-day{text-align:center;padding:5px 2px;border-radius:4px;color:var(--text2);cursor:pointer;transition:opacity .15s}
+.cal-day:hover:not(.vazio){opacity:.75}
+.cal-day.ocupado{background:#B5D4F4;color:#0C447C;font-weight:500}
+.cal-day.livre{background:var(--bg2)}
+.cal-day.manutencao{background:#FAC775;color:#633806;font-weight:500}
+.cal-day.checkout-only{background:#E1F5EE;color:#085041;font-weight:500}
+.cal-day.vazio{background:transparent;cursor:default}
+.cal-day.airbnb{background:#FFD8B0;color:#7A2E00;font-weight:500;cursor:pointer}
+.cal-day.airbnb:hover{opacity:.75}
+.cal-day.today{background:var(--blue)!important;color:#fff!important;font-weight:700;border-radius:50%}
+.legend{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* ── Custos ── */
+.custo-row{display:flex;align-items:center;padding:6px 0;border-bottom:.5px solid var(--border);font-size:13px;gap:6px}
+.custo-row:last-of-type{border:none}
+.progbar{height:6px;background:var(--bg2);border-radius:3px;margin-top:8px;overflow:hidden}
+.progfill{height:100%;border-radius:3px;transition:width .4s}
+
+/* ── Gargalos / notificações ── */
+.gargalo{border-radius:var(--radius);padding:.65rem 1rem;margin-bottom:8px;font-size:13px;display:flex;align-items:flex-start;gap:10px}
+.gargalo.red{background:var(--red-bg);color:var(--red-text)}
+.gargalo.warn{background:var(--amber-bg);color:var(--amber-text)}
+.gargalo.ok{background:var(--green-bg);color:var(--green-text)}
+.gargalo.info{background:var(--info-bg);color:var(--info-text)}
+.gargalo-body{flex:1;min-width:0}
+.gargalo-title{font-weight:500;margin-bottom:2px}
+.gargalo-desc{font-size:12px;opacity:.85}
+.gargalo-actions{display:flex;gap:0;flex-shrink:0;margin-top:1px}
+
+/* ── Filtros ── */
+.filters{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.filter-btn{font-size:12px;padding:4px 10px;border-radius:var(--radius);border:.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer}
+.filter-btn.active{background:var(--bg2);color:var(--text);font-weight:500;border-color:var(--border2)}
+.search-wrap{margin-bottom:10px;position:relative}
+.search-wrap input{width:100%;font-size:13px;padding:8px 12px;border-radius:var(--radius);border:.5px solid var(--border2);background:var(--bg);color:var(--text)}
+
+/* ── Hóspedes ── */
+.hospede-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:.5px solid var(--border)}
+.hospede-row:last-child{border:none}
+.hospede-row .hbody{flex:1;min-width:0;cursor:pointer}
+.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:13px;flex-shrink:0;cursor:pointer}
+.hname{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hmeta{font-size:12px;color:var(--text2);margin-top:2px}
+.hright{text-align:right;flex-shrink:0}
+.badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:var(--radius);margin-left:6px;font-weight:500}
+.badge-check{background:var(--green-bg);color:var(--green-text)}
+.badge-pend{background:var(--amber-bg);color:var(--amber-text)}
+.badge-canc{background:var(--red-bg);color:var(--red-text)}
+.badge-orig{background:var(--info-bg);color:var(--info-text);margin-left:4px}
+.stars{color:#BA7517;font-size:13px}
+.empty{font-size:13px;color:var(--text3);text-align:center;padding:1.5rem 0}
+
+/* ── Tarefas ── */
+.tarefa-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:.5px solid var(--border)}
+.tarefa-row:last-child{border:none}
+.tarefa-row.feita .tarefa-texto{text-decoration:line-through;color:var(--text3)}
+.tarefa-check{width:18px;height:18px;border-radius:4px;border:.5px solid var(--border2);cursor:pointer;flex-shrink:0;background:transparent;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:11px}
+.tarefa-check.done{background:var(--blue);border-color:var(--blue);color:#fff}
+.tarefa-body{flex:1;min-width:0}
+.tarefa-texto{font-size:13px;line-height:1.4}
+.tarefa-meta{font-size:11px;color:var(--text3);margin-top:3px}
+.prio-alta{background:var(--red-bg);color:var(--red-text);font-size:11px;padding:2px 6px;border-radius:var(--radius);font-weight:500;margin-left:6px}
+.prio-media{background:var(--amber-bg);color:var(--amber-text);font-size:11px;padding:2px 6px;border-radius:var(--radius);font-weight:500;margin-left:6px}
+.prio-baixa{background:var(--green-bg);color:var(--green-text);font-size:11px;padding:2px 6px;border-radius:var(--radius);font-weight:500;margin-left:6px}
+.tarefa-vencida{background:var(--red-bg);color:var(--red-text);font-size:11px;padding:2px 6px;border-radius:var(--radius);font-weight:500;margin-left:6px}
+.tarefa-input-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:10px}
+.tarefa-input-row input[type=text]{flex:1;min-width:160px}
+.tarefa-input-row input[type=date]{width:140px}
+.tarefa-input-row select{width:130px}
+.tarefa-input-row input,.tarefa-input-row select{font-size:13px;padding:7px 10px;border-radius:var(--radius);border:.5px solid var(--border2);background:var(--bg);color:var(--text)}
+.tarefa-add-btn{font-size:13px;padding:7px 18px;border-radius:var(--radius);border:none;background:var(--blue);color:#fff;cursor:pointer;font-weight:500;white-space:nowrap}
+.tarefa-casa-label{font-size:12px;font-weight:500;color:var(--text2);margin:14px 0 6px;padding-top:10px;border-top:.5px solid var(--border)}
+.tarefa-casa-label:first-child{border-top:none;margin-top:0}
+
+/* ── Resumo ── */
+.resumo-month-nav{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem}
+.resumo-month-title{font-size:16px;font-weight:500;flex:1;text-align:center}
+.resumo-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border);font-size:13px}
+.resumo-row:last-child{border:none}
+.resumo-row.total{font-weight:500;font-size:14px;padding-top:10px}
+.resumo-row.saldo-pos{color:#3B6D11;font-weight:500;font-size:15px}
+.resumo-row.saldo-neg{color:#A32D2D;font-weight:500;font-size:15px}
+.resumo-section-title{font-size:12px;font-weight:500;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:.5px solid var(--border)}
+
+/* ── Imóveis ── */
+.imovel-card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;margin-bottom:.75rem;display:flex;align-items:center;gap:14px}
+.imovel-icon{width:46px;height:46px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.imovel-info{flex:1;min-width:0}
+.imovel-nome{font-size:15px;font-weight:500}
+.imovel-meta{font-size:12px;color:var(--text2);margin-top:3px}
+.imovel-actions{display:flex;gap:4px;flex-shrink:0}
+.add-imovel-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border-radius:var(--radius-lg);border:1.5px dashed var(--border2);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;margin-top:.25rem}
+.add-imovel-btn:hover{background:var(--bg2);color:var(--text);border-color:var(--blue)}
+
+/* ── Projeção / benchmark ── */
+.benchmark-bar{height:10px;background:var(--bg2);border-radius:5px;margin-top:5px;overflow:hidden;position:relative}
+.benchmark-fill{height:100%;border-radius:5px}
+.benchmark-marker{position:absolute;top:-2px;height:14px;width:2px;background:#E24B4A;border-radius:1px}
+
+/* ── Overlay ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.overlay.show{display:flex}
+.modal{background:var(--bg);border-radius:var(--radius-lg);border:.5px solid var(--border);padding:1.75rem;width:440px;max-width:100%;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:15px;font-weight:500;margin-bottom:1.1rem}
+.form-row{margin-bottom:11px}
+.form-row label{font-size:12px;color:var(--text2);display:block;margin-bottom:3px}
+.form-row input,.form-row select,.form-row textarea{width:100%;font-size:13px;padding:7px 10px;border-radius:var(--radius);border:.5px solid var(--border2);background:var(--bg);color:var(--text)}
+.form-row textarea{resize:vertical;min-height:60px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.modal-btns{display:flex;gap:8px;margin-top:1.1rem}
+.modal-btns button{flex:1;font-size:13px;padding:8px;border-radius:var(--radius);cursor:pointer}
+.btn-cancel{background:transparent;border:.5px solid var(--border2);color:var(--text2)}
+.btn-save{background:var(--blue);border:none;color:#fff;font-weight:500}
+.btn-danger{background:#A32D2D;border:none;color:#fff;font-weight:500}
+.detail-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:17px;margin:0 auto 10px}
+.detail-name{font-size:16px;font-weight:500;text-align:center;margin-bottom:3px}
+.detail-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:1rem}
+.dtable{width:100%;font-size:13px;border-collapse:collapse}
+.dtable td{padding:6px 0;border-bottom:.5px solid var(--border)}
+.dtable tr:last-child td{border:none}
+.dtable .dl{color:var(--text2);width:45%}
+.dtable .dr{font-weight:500;text-align:right}
+.obs-box{background:var(--bg2);border-radius:var(--radius);padding:.75rem;font-size:13px;color:var(--text2);margin-top:10px;line-height:1.5}
+
+/* ── Notificações painel ── */
+.notif-panel{position:fixed;top:52px;right:1.5rem;width:320px;background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:150;max-height:420px;overflow-y:auto;display:none}
+.notif-panel.show{display:block}
+.notif-header{font-size:13px;font-weight:500;padding:.75rem 1rem;border-bottom:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.notif-item{padding:.75rem 1rem;border-bottom:.5px solid var(--border);font-size:13px}
+.notif-item:last-child{border:none}
+.notif-item .nt{font-weight:500;margin-bottom:2px}
+.notif-item .nd{font-size:12px;color:var(--text2)}
+.notif-item.urgent .nt{color:var(--red-text)}
+.notif-item.warn .nt{color:var(--amber-text)}
+.notif-item.info .nt{color:var(--info-text)}
+.notif-empty{padding:1.5rem 1rem;text-align:center;font-size:13px;color:var(--text3)}
+.notif-link{cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">🏠 Aluguel</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('visao',this)">Visão geral</button>
+    <button class="nav-tab" onclick="showPage('hospedes',this)">Hóspedes</button>
+    <button class="nav-tab" onclick="showPage('tarefas',this)">Tarefas</button>
+    <button class="nav-tab" onclick="showPage('resumo',this)">Resumo</button>
+    <button class="nav-tab" onclick="showPage('analise',this)">Análise</button>
+    <button class="nav-tab" onclick="showPage('imoveis',this)">Imóveis</button>
+  </div>
+  <div class="topbar-right">
+    <div class="save-badge" id="saveBadge">Carregando...</div>
+    <button class="notif-btn" id="notifBtn" onclick="toggleNotif()" title="Notificações">🔔<span class="notif-dot" id="notifDot" style="display:none"></span></button>
+    <button class="reset-btn" onclick="confirmReset()">🗑</button>
+  </div>
+</div>
+
+<!-- Painel de notificações -->
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-header"><span>Notificações</span><span id="notifCount" style="font-size:12px;color:var(--text3)"></span></div>
+  <div id="notifList"></div>
+</div>
+
+<div class="container">
+
+  <!-- VISÃO GERAL -->
+  <div id="page-visao" class="page active">
+    <div class="house-sel" id="houseSel"></div>
+    <div class="metrics" id="metrics"></div>
+    <div class="grid2">
+      <div class="card">
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="calMes(-1)">&#8592;</button>
+          <div class="cal-nav-title" id="calTitle"></div>
+          <button class="cal-nav-btn" onclick="calMes(+1)">&#8594;</button>
+        </div>
+        <div class="cal" id="cal">
+          <div class="cal-head">D</div><div class="cal-head">S</div><div class="cal-head">T</div>
+          <div class="cal-head">Q</div><div class="cal-head">Q</div><div class="cal-head">S</div><div class="cal-head">S</div>
+        </div>
+        <div class="legend">
+          <span class="leg"><span class="leg-dot" style="background:#B5D4F4"></span>Ocupado</span>
+          <span class="leg"><span class="leg-dot" style="background:#FFD8B0"></span>Airbnb</span>
+          <span class="leg"><span class="leg-dot" style="background:var(--bg2)"></span>Livre</span>
+          <span class="leg"><span class="leg-dot" style="background:#FAC775"></span>Manutenção</span>
+          <span class="leg"><span class="leg-dot" style="background:#E1F5EE"></span>Checkout</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-head">
+          <div class="sec-title">Custos operacionais</div>
+          <button class="icon-btn" onclick="openCustoModal(null)" title="Adicionar">＋</button>
+        </div>
+        <div id="custos"></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="section-head">
+          <div class="sec-title">Receitas por casa</div>
+          <button class="icon-btn" onclick="openReceitaModal()" title="Editar receitas" aria-label="Editar receitas">✏</button>
+        </div>
+        <div style="position:relative;width:100%;height:190px">
+          <canvas id="chartReceitas" role="img" aria-label="Receitas mensais por casa"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec-title">Ocupação por casa</div>
+        <div id="ocupacao"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-head">
+        <div class="sec-title">Gargalos e alertas</div>
+        <button class="icon-btn" onclick="openGargaloModal(null)">＋ Alerta manual</button>
+      </div>
+      <div id="gargalos"></div>
+    </div>
+  </div>
+
+  <!-- HÓSPEDES -->
+  <div id="page-hospedes" class="page">
+    <div class="card">
+      <div class="section-head">
+        <div class="sec-title">Hóspedes</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-export" onclick="importarDoAirbnb()" title="Importar reservas do Airbnb" style="background:var(--amber-bg);color:var(--amber-text);border-color:#BA7517">🏠 Airbnb</button>
+          <button class="btn-export" onclick="exportCSV()" title="Exportar CSV">⬇ CSV</button>
+          <button class="icon-btn" onclick="openHospedeModal(null)">＋ Novo</button>
+        </div>
+      </div>
+      <div class="search-wrap"><input id="searchInput" placeholder="Buscar por nome, casa, origem ou e-mail..." oninput="renderLista()"/></div>
+      <div class="filters" id="hospedeFilters">
+        <button class="filter-btn active" onclick="setFilter('todos',this)">Todos</button>
+        <button class="filter-btn" onclick="setFilter('confirmado',this)">Confirmados</button>
+        <button class="filter-btn" onclick="setFilter('pendente',this)">Pendentes</button>
+        <button class="filter-btn" onclick="setFilter('cancelado',this)">Cancelados</button>
+        <button class="filter-btn" onclick="setFilter('airbnb',this)">Airbnb</button>
+      </div>
+      <div id="lista"></div>
+    </div>
+    <div class="metrics" id="hospedeMetrics"></div>
+  </div>
+
+  <!-- TAREFAS -->
+  <div id="page-tarefas" class="page">
+    <div class="card">
+      <div class="sec-title">Nova tarefa / manutenção</div>
+      <div class="tarefa-input-row">
+        <input type="text" id="tTexto" placeholder="Descreva a tarefa..."/>
+        <select id="tCasa"></select>
+        <select id="tPrio"><option value="alta">Alta</option><option value="media" selected>Média</option><option value="baixa">Baixa</option></select>
+        <input type="date" id="tData"/>
+        <button class="tarefa-add-btn" onclick="addTarefa()">Adicionar</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-title">Lembretes por unidade</div>
+      <div class="filters" id="tarefaFilters"></div>
+      <div id="tarefaLista"></div>
+    </div>
+    <div class="metrics" id="tarefaMetrics"></div>
+  </div>
+
+  <!-- RESUMO -->
+  <div id="page-resumo" class="page">
+    <div class="resumo-month-nav">
+      <button class="cal-nav-btn" onclick="resumoMes(-1)">&#8592;</button>
+      <div class="resumo-month-title" id="resumoTitle"></div>
+      <button class="cal-nav-btn" onclick="resumoMes(+1)">&#8594;</button>
+    </div>
+    <div class="house-sel" id="resumoHouseSel"></div>
+    <div class="section-head" style="margin-bottom:.5rem">
+      <div></div>
+      <button class="btn-export" onclick="exportResumoCSV()">⬇ Exportar resumo CSV</button>
+    </div>
+    <div id="resumoConteudo"></div>
+  </div>
+
+  <!-- ANÁLISE -->
+  <div id="page-analise" class="page">
+    <div class="card">
+      <div class="section-head">
+        <div class="sec-title">Receita vs Custo — últimos 12 meses</div>
+        <div class="house-sel" id="analiseHouseSel" style="margin-bottom:0"></div>
+      </div>
+      <div style="position:relative;width:100%;height:260px">
+        <canvas id="chartAnual" role="img" aria-label="Receita e custo anuais"></canvas>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="sec-title">Composição dos custos</div>
+        <div style="position:relative;width:100%;height:200px">
+          <canvas id="chartCustosPizza" role="img" aria-label="Composição de custos por categoria"></canvas>
+        </div>
+        <div id="custosPizzaLegend" style="margin-top:10px"></div>
+      </div>
+      <div class="card">
+        <div class="sec-title">Origem das reservas</div>
+        <div style="position:relative;width:100%;height:200px">
+          <canvas id="chartOrigem" role="img" aria-label="Origem das reservas"></canvas>
+        </div>
+        <div id="origemLegend" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-title">Projeção para os próximos 3 meses</div>
+      <div id="projecao"></div>
+    </div>
+    <div class="card">
+      <div class="sec-title">Benchmark de ocupação</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <label style="font-size:13px;color:var(--text2)">Meta de ocupação (%)</label>
+        <input type="number" id="benchmarkInput" min="1" max="100" style="width:70px;font-size:13px;padding:5px 8px;border-radius:var(--radius);border:.5px solid var(--border2);background:var(--bg);color:var(--text)" oninput="updateBenchmark(this.value)"/>
+        <span style="font-size:12px;color:var(--text3)">Ajuste conforme seu mercado/região</span>
+      </div>
+      <div id="benchmark"></div>
+    </div>
+  </div>
+
+  <!-- IMÓVEIS -->
+  <div id="page-imoveis" class="page">
+    <div class="card">
+      <div class="section-head">
+        <div class="sec-title">Meus imóveis</div>
+        <div id="imoveisCount" style="font-size:12px;color:var(--text3)"></div>
+      </div>
+      <div id="imoveisList"></div>
+      <button class="add-imovel-btn" onclick="openImovelModal(null)">＋ Adicionar novo imóvel</button>
+    </div>
+    <div class="card">
+      <div class="sec-title">Exportar / Importar dados</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+        <button class="btn-export" onclick="exportJSON()" style="font-size:13px;padding:8px 16px">⬇ Exportar backup (JSON)</button>
+        <label style="font-size:13px;padding:8px 16px;border-radius:var(--radius);border:.5px solid var(--border2);cursor:pointer;color:var(--text2)">
+          ⬆ Importar backup (JSON)<input type="file" accept=".json" onchange="importJSON(event)" style="display:none"/>
+        </label>
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-top:10px">Use o backup JSON para transferir dados entre dispositivos ou fazer cópia de segurança.</p>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- OVERLAYS -->
+<!-- Modal de confirmação personalizado -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal" style="max-width:360px">
+    <h3 id="confirmTitle" style="margin-bottom:.5rem"></h3>
+    <p id="confirmMsg" style="font-size:13px;color:var(--text2);margin-bottom:1.1rem;line-height:1.5"></p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeOverlay('confirmOverlay')">Cancelar</button>
+      <button class="btn-danger" id="confirmBtn">Confirmar</button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="imovelOverlay" onclick="if(event.target===this)closeOverlay('imovelOverlay')">
+  <div class="modal">
+    <h3 id="imovelModalTitle">Novo imóvel</h3>
+    <input type="hidden" id="imId"/>
+    <div class="form-row"><label>Nome do imóvel</label><input id="imNome" placeholder="Ex: Cobertura Recife"/></div>
+    <div class="form-row"><label>Endereço / localização</label><input id="imLocal" placeholder="Ex: Av. Boa Viagem, 1200"/></div>
+    <div class="fgrid">
+      <div class="form-row"><label>Tipo</label>
+        <select id="imTipo"><option>Casa</option><option>Apartamento</option><option>Cobertura</option><option>Chalé</option><option>Sítio</option><option>Studio</option><option>Outro</option></select>
+      </div>
+      <div class="form-row"><label>Cor</label>
+        <select id="imCor"><option value="#378ADD">Azul</option><option value="#1D9E75">Verde</option><option value="#D85A30">Laranja</option><option value="#7F77DD">Roxo</option><option value="#D4537E">Rosa</option><option value="#BA7517">Âmbar</option></select>
+      </div>
+    </div>
+    <div class="fgrid3">
+      <div class="form-row"><label>Quartos</label><input id="imQuartos" type="number" min="0" placeholder="2"/></div>
+      <div class="form-row"><label>Pessoas</label><input id="imCapacidade" type="number" min="1" placeholder="4"/></div>
+      <div class="form-row"><label>Diária base (R$)</label><input id="imDiaria" type="number" placeholder="0"/></div>
+    </div>
+    <div class="form-row"><label>Observações</label><textarea id="imObs" placeholder="Informações adicionais..."></textarea></div>
+    <div class="form-row"><label>Link iCal Airbnb</label><input id="imIcal" placeholder="https://www.airbnb.com.br/calendar/ical/..."/></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeOverlay('imovelOverlay')">Cancelar</button>
+      <button class="btn-save" onclick="saveImovel()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="hospedeOverlay" onclick="if(event.target===this)closeOverlay('hospedeOverlay')">
+  <div class="modal">
+    <h3 id="hospedeModalTitle">Novo hóspede</h3>
+    <input type="hidden" id="fId"/>
+    <div class="fgrid">
+      <div class="form-row"><label>Nome completo</label><input id="fNome" placeholder="Ana Silva"/></div>
+      <div class="form-row"><label>Telefone</label><input id="fTel" placeholder="(84) 99999-0000"/></div>
+    </div>
+    <div class="form-row"><label>E-mail</label><input id="fEmail" placeholder="ana@email.com"/></div>
+    <div class="fgrid">
+      <div class="form-row"><label>Casa</label><select id="fCasa"></select></div>
+      <div class="form-row"><label>Status</label>
+        <select id="fStatus"><option value="confirmado">Confirmado</option><option value="pendente">Pendente</option><option value="cancelado">Cancelado</option></select>
+      </div>
+    </div>
+    <div class="fgrid">
+      <div class="form-row"><label>Check-in</label><input id="fIn" type="date"/></div>
+      <div class="form-row"><label>Check-out</label><input id="fOut" type="date"/></div>
+    </div>
+    <div class="fgrid">
+      <div class="form-row"><label>Valor (R$)</label><input id="fValor" type="number" placeholder="0"/></div>
+      <div class="form-row"><label>Avaliação (1–5)</label><input id="fNota" type="number" min="1" max="5" placeholder="5"/></div>
+    </div>
+    <div class="fgrid">
+      <div class="form-row"><label>Origem da reserva</label>
+        <select id="fOrigem"><option value="Airbnb">Airbnb</option><option value="Booking">Booking</option><option value="Direto">Direto</option><option value="WhatsApp">WhatsApp</option><option value="Indicação">Indicação</option><option value="Outro">Outro</option></select>
+      </div>
+      <div class="form-row"><label>Número de hóspedes</label><input id="fNumHosp" type="number" min="1" placeholder="2"/></div>
+    </div>
+    <div class="form-row"><label>Observações</label><textarea id="fObs" placeholder="Preferências, observações..."></textarea></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeOverlay('hospedeOverlay')">Cancelar</button>
+      <button class="btn-save" onclick="saveHospede()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="custoOverlay" onclick="if(event.target===this)closeOverlay('custoOverlay')">
+  <div class="modal">
+    <h3 id="custoModalTitle">Adicionar custo</h3>
+    <input type="hidden" id="cId"/>
+    <div class="form-row"><label>Nome do custo</label><input id="cNome" placeholder="Ex: Água, limpeza..."/></div>
+    <div class="fgrid">
+      <div class="form-row"><label>Casa</label><select id="cCasa"></select></div>
+      <div class="form-row"><label>Mês / Ano</label><input id="cData" type="month"/></div>
+    </div>
+    <div class="form-row"><label>Valor (R$)</label><input id="cValor" type="number" placeholder="0"/></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeOverlay('custoOverlay')">Cancelar</button>
+      <button class="btn-save" onclick="saveCusto()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="receitaOverlay" onclick="if(event.target===this)closeOverlay('receitaOverlay')">
+  <div class="modal" id="receitaModal"><h3>Editar receitas</h3></div>
+</div>
+
+<div class="overlay" id="gargaloOverlay" onclick="if(event.target===this)closeOverlay('gargaloOverlay')">
+  <div class="modal">
+    <h3 id="gargaloModalTitle">Novo alerta</h3>
+    <input type="hidden" id="gId"/>
+    <div class="form-row"><label>Título</label><input id="gTitulo" placeholder="Ex: Goteira no banheiro"/></div>
+    <div class="form-row"><label>Descrição</label><textarea id="gDesc" placeholder="Detalhes..."></textarea></div>
+    <div class="form-row"><label>Tipo</label>
+      <select id="gTipo"><option value="red">Crítico</option><option value="warn" selected>Atenção</option><option value="ok">Informativo</option></select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeOverlay('gargaloOverlay')">Cancelar</button>
+      <button class="btn-save" onclick="saveGargalo()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="tarefaEditOverlay" onclick="if(event.target===this)closeOverlay('tarefaEditOverlay')">
+  <div class="modal">
+    <h3>Editar tarefa</h3>
+    <input type="hidden" id="tEditId"/>
+    <div class="form-row"><label>Descrição</label><input id="tEditTexto"/></div>
+    <div class="form-row"><label>Casa</label><select id="tEditCasa"></select></div>
+    <div class="fgrid">
+      <div class="form-row"><label>Prioridade</label><select id="tEditPrio"><option value="alta">Alta</option><option value="media">Média</option><option value="baixa">Baixa</option></select></div>
+      <div class="form-row"><label>Prazo</label><input type="date" id="tEditData"/></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeOverlay('tarefaEditOverlay')">Cancelar</button>
+      <button class="btn-save" onclick="saveTarefaEdit()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="detailOverlay" onclick="if(event.target===this)closeOverlay('detailOverlay')">
+  <div class="modal" id="detailContent"></div>
+</div>
+
+<div class="overlay" id="calDiaOverlay" onclick="if(event.target===this)closeOverlay('calDiaOverlay')">
+  <div class="modal" id="calDiaContent"></div>
+</div>
+
+<div class="overlay" id="airbnbImportOverlay" onclick="if(event.target===this)closeOverlay('airbnbImportOverlay')">
+  <div class="modal" style="width:560px;max-width:100%">
+    <h3 style="margin-bottom:.25rem">🏠 Importar reservas do Airbnb</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:1rem">Reservas encontradas no calendário iCal. Edite o nome do hóspede e clique em Importar para salvar.</p>
+    <div id="airbnbImportLista"></div>
+    <div class="modal-btns" style="margin-top:1rem">
+      <button class="btn-cancel" onclick="closeOverlay('airbnbImportOverlay')">Cancelar</button>
+      <button class="btn-save" onclick="confirmarImportacaoAirbnb()">Importar selecionados</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Constantes ────────────────────────────────────────────────
+var AVC=[{bg:'#E6F1FB',text:'#0C447C'},{bg:'#E1F5EE',text:'#085041'},{bg:'#EEEDFE',text:'#3C3489'},{bg:'#FAECE7',text:'#712B13'},{bg:'#FBEAF0',text:'#72243E'},{bg:'#EAF3DE',text:'#27500A'}];
+var SL={confirmado:'Confirmado',pendente:'Pendente',cancelado:'Cancelado'};
+var SC={confirmado:'badge-check',pendente:'badge-pend',cancelado:'badge-canc'};
+var PC={alta:'prio-alta',media:'prio-media',baixa:'prio-baixa'};
+var PL={alta:'Alta',media:'Média',baixa:'Baixa'};
+var MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var TIPO_EMOJI={Casa:'🏠',Apartamento:'🏢',Cobertura:'🏙',Chalé:'🏡',Sítio:'🌿',Studio:'🛋',Outro:'🏘'};
+var BENCHMARK_OCUPACAO=65; // padrão, sobrescrito por state.benchmarkOcupacao
+
+// ── Estado padrão ─────────────────────────────────────────────
+function hoje(){return new Date()}
+var DEF={
+  houseFilter:0,filterStatus:'todos',tarefaFilter:'todas',
+  calAno:new Date().getFullYear(),calMes:new Date().getMonth(),
+  resumoAno:new Date().getFullYear(),resumoMes:new Date().getMonth(),resumoHouse:0,
+  analiseHouse:0,
+  receitasMes:{},custos:[],ocupacaoMes:{},
+  hospedes:[
+    {id:1,nome:'Mariana Costa',tel:'(84) 98811-2233',email:'mariana@gmail.com',casa:'Casa 1 — Praia',status:'confirmado',checkin:'2025-04-04',checkout:'2025-04-07',valor:960,nota:5,origem:'Airbnb',numHosp:2,obs:'Prefere andar de baixo.'},
+    {id:2,nome:'Ricardo Alves',tel:'(11) 97700-5511',email:'r.alves@outlook.com',casa:'Casa 2 — Centro',status:'confirmado',checkin:'2025-04-10',checkout:'2025-04-12',valor:640,nota:4,origem:'Booking',numHosp:1,obs:''},
+    {id:3,nome:'Fernanda Lima',tel:'(21) 99123-4567',email:'fernanda@hotmail.com',casa:'Casa 3 — Serra',status:'pendente',checkin:'2025-04-17',checkout:'2025-04-20',valor:780,nota:0,origem:'Direto',numHosp:3,obs:'Aguardando pagamento.'},
+    {id:4,nome:'Bruno Souza',tel:'(85) 98844-3322',email:'bsouza@email.com',casa:'Casa 1 — Praia',status:'confirmado',checkin:'2025-04-23',checkout:'2025-04-27',valor:1280,nota:5,origem:'Airbnb',numHosp:6,obs:'Família com 2 crianças.'},
+    {id:5,nome:'Juliana Mendes',tel:'(31) 97755-6688',email:'ju.mendes@gmail.com',casa:'Casa 2 — Centro',status:'cancelado',checkin:'2025-04-05',checkout:'2025-04-08',valor:0,nota:0,origem:'WhatsApp',numHosp:2,obs:'Cancelou.'},
+  ],
+  tarefas:[
+    {id:1,texto:'Trocar torneira da cozinha',casa:'Casa 1 — Praia',prio:'alta',data:'2025-04-22',feita:false},
+    {id:2,texto:'Repor itens de higiene',casa:'Casa 1 — Praia',prio:'media',data:'2025-04-25',feita:false},
+    {id:3,texto:'Verificar ar-condicionado',casa:'Casa 2 — Centro',prio:'alta',data:'2025-04-21',feita:false},
+    {id:4,texto:'Limpeza pós-temporada',casa:'Casa 2 — Centro',prio:'media',data:'2025-04-28',feita:false},
+    {id:5,texto:'Pintura da varanda',casa:'Casa 3 — Serra',prio:'baixa',data:'2025-05-05',feita:false},
+    {id:6,texto:'Checar telhado após chuva',casa:'Casa 3 — Serra',prio:'alta',data:'2025-04-20',feita:true},
+  ],
+  gargalosExtras:[],
+  imoveis:[
+    {id:1,nome:'Casa Terracota',local:'',tipo:'Casa',quartos:2,capacidade:6,diaria:0,cor:'#D85A30',obs:'',icalUrl:'https://www.airbnb.com.br/calendar/ical/28283599.ics?t=bb170760f5ab43e7bec108d15a9400c0'},
+    {id:2,nome:'Casa Frida',local:'',tipo:'Casa',quartos:2,capacidade:6,diaria:0,cor:'#7F77DD',obs:'',icalUrl:'https://www.airbnb.com.br/calendar/ical/45895549.ics?t=334b99125f49463c8d530e52f0733d64'},
+    {id:3,nome:'Casa Azul',local:'',tipo:'Casa',quartos:2,capacidade:6,diaria:0,cor:'#185FA5',obs:'',icalUrl:'https://www.airbnb.com.br/calendar/ical/1315796557769332463.ics?t=7c5d7f23996240868d8431485a1e35e8'},
+  ],
+  nextHid:6,nextTid:7,nextCid:1,nextGid:1,nextImId:4,
+  benchmarkOcupacao:65,
+};
+
+// Preencher dados históricos de exemplo
+(function(){
+  var meses=[
+    [2025,0],[2025,1],[2025,2],[2025,3],
+    [2024,9],[2024,10],[2024,11],
+  ];
+  var recBase=[[4800,3200,2600],[4200,2900,2200],[3800,2700,2000],[5100,3400,2800],
+               [3200,2100,1800],[3600,2400,2000],[4400,3000,2500]];
+  var cusBase=[[1090,860,680],[990,760,600],[890,700,550],[1090,860,680],
+               [790,620,500],[850,680,540],[990,760,620]];
+  var ocBase=[[22,15,18],[19,13,15],[17,12,14],[24,17,20],
+              [14,10,12],[16,11,14],[20,14,17]];
+  meses.forEach(function(m,i){
+    var k=mesKey(m[0],m[1]);
+    DEF.receitasMes[k]=recBase[i];
+    // Custos individuais
+    var nomes=['Limpeza','IPTU','Taxas plataforma'];
+    var split=[[0.37,0.14,0.22],[0.34,0.19,0.15],[0.25,0.11,0.12]];
+    nomes.forEach(function(n,ni){
+      split.forEach(function(s,si){
+        var v=Math.round(cusBase[i][si]*s[ni]);
+        if(v>0) DEF.custos.push({id:DEF.nextCid++,nome:n,casa:si,data:k,valor:v});
+      });
+    });
+    DEF.ocupacaoMes[k]=ocBase[i];
+  });
+})();
+
+// ── Persistência ──────────────────────────────────────────────
+// mesKey precisa estar disponível antes do loadState e da IIFE de dados
+function mesKey(ano,mes){return ano+'-'+(mes<9?'0':'')+(mes+1)}
+
+// ── Supabase REST (sem SDK) ────────────────────────────────────
+var SB_URL='https://dkjxprfwiwrpkbfivrtj.supabase.co';
+var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRranhwcmZ3aXdycGtiZml2cnRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTg3NDIsImV4cCI6MjA5MjUzNDc0Mn0.3roCBmcS9dRym46W9njZTf4A4T_HuLnA-2m9Qg75qsE';
+var DB_ID='principal';
+function sbH(extra){var h={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};return Object.assign(h,extra||{});}
+async function sbLoad(){
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/dashboard?id=eq.'+DB_ID+'&select=dados&limit=1',{method:'GET',headers:sbH()});
+    if(!r.ok)return null;
+    var rows=await r.json();
+    return(rows&&rows.length&&rows[0].dados)?rows[0].dados:null;
+  }catch(e){return null;}
+}
+async function sbSave(data){
+  try{
+    await fetch(SB_URL+'/rest/v1/dashboard',{method:'POST',headers:sbH({'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({id:DB_ID,dados:data,atualizado_em:new Date().toISOString()})});
+  }catch(e){}
+}
+
+function loadState(){
+  try{var r=localStorage.getItem('aluguel_v6');if(r)return JSON.parse(r);}catch(e){}
+  return JSON.parse(JSON.stringify(DEF));
+}
+var _saveTimer=null;
+function saveState(){
+  document.getElementById('saveBadge').textContent='Salvando...';
+  clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(async function(){
+    try{localStorage.setItem('aluguel_v6',JSON.stringify(state));}catch(e){}
+    await sbSave(state);
+    document.getElementById('saveBadge').textContent='☁ Salvo às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  },400);
+}
+function confirmReset(){
+  openConfirmModal(
+    '🗑 Limpar todos os dados',
+    'Todos os hóspedes, custos, tarefas e receitas serão apagados permanentemente. Esta ação não pode ser desfeita.',
+    'Limpar tudo',
+    async function(){
+      try{await fetch(SB_URL+'/rest/v1/dashboard?id=eq.'+DB_ID,{method:'DELETE',headers:sbH()});}catch(e){}
+      localStorage.removeItem('aluguel_v6');location.reload();
+    }
+  );
+}
+function exportJSON(){
+  var blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='dashboard-aluguel-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+function importJSON(ev){
+  var f=ev.target.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(e){
+    try{
+      var d=JSON.parse(e.target.result);
+      var erros=[];
+      if(!d||typeof d!=='object') erros.push('Arquivo não é um objeto JSON válido.');
+      if(!Array.isArray(d.imoveis)||!d.imoveis.length) erros.push('Campo "imoveis" ausente ou vazio.');
+      if(!Array.isArray(d.hospedes)) erros.push('Campo "hospedes" ausente.');
+      if(!Array.isArray(d.tarefas)) erros.push('Campo "tarefas" ausente.');
+      if(!Array.isArray(d.custos)) erros.push('Campo "custos" ausente.');
+      if(erros.length){alert('Arquivo inválido:\n\n'+erros.join('\n'));return;}
+      localStorage.setItem('aluguel_v6',JSON.stringify(d));
+      alert('Backup importado com sucesso! A página será recarregada.');
+      location.reload();
+    }catch(err){alert('Erro ao ler o arquivo. Verifique se é um JSON válido.\n\n'+err.message);}
+  };
+  r.readAsText(f);
+}
+
+var state=loadState();
+// migrações de segurança
+if(!state.imoveis||!state.imoveis.length) state.imoveis=JSON.parse(JSON.stringify(DEF.imoveis));
+if(!state.nextImId) state.nextImId=state.imoveis.length+1;
+if(!state.receitasMes) state.receitasMes={};
+if(!state.ocupacaoMes) state.ocupacaoMes={};
+if(!state.gargalosExtras) state.gargalosExtras=[];
+if(!state.nextGid) state.nextGid=1;
+if(!state.calAno){state.calAno=new Date().getFullYear();state.calMes=new Date().getMonth();}
+if(!state.resumoAno){state.resumoAno=new Date().getFullYear();state.resumoMes=new Date().getMonth();state.resumoHouse=0;}
+if(!state.analiseHouse) state.analiseHouse=0;
+if(!state.benchmarkOcupacao) state.benchmarkOcupacao=65;
+BENCHMARK_OCUPACAO=state.benchmarkOcupacao;
+state.hospedes.forEach(function(h){if(!h.origem)h.origem='Direto';if(!h.numHosp)h.numHosp=1;});
+// migrar custos antigos
+if(state.custos&&state.custos.length&&state.custos[0].valores!==undefined){
+  var novos=[];var nid=1;
+  state.custos.forEach(function(c){c.valores.forEach(function(v,i){if(v>0)novos.push({id:nid++,nome:c.nome,casa:i,data:'2025-04',valor:v})})});
+  state.custos=novos;state.nextCid=nid;
+}
+
+// ── Utils ─────────────────────────────────────────────────────
+function fmt(v){return'R$ '+Math.round(v).toLocaleString('pt-BR')}
+function fmtMes(ano,mes){return MESES[mes]+' '+ano}
+// mesKey definida antes da IIFE de dados históricos
+function ac(id){return AVC[Number(id)%AVC.length]}
+function initials(n){return n.split(' ').map(function(w){return w[0]}).join('').slice(0,2).toUpperCase()}
+function stars(n){return'★'.repeat(n)+'☆'.repeat(5-n)}
+function diasEntre(a,b){return Math.max(0,Math.round((new Date(b)-new Date(a))/86400000))}
+function closeOverlay(id){document.getElementById(id).classList.remove('show')}
+function diasNoMes(ano,mes){return new Date(ano,mes+1,0).getDate()}
+function getCasas(){return state.imoveis}
+
+function getReceitas(ano,mes){
+  var casas=getCasas(),n=casas.length;
+  var k=mesKey(ano,mes);
+
+  // 1. Somar receitas dos hóspedes confirmados com checkin no mês
+  var deHospedes=new Array(n).fill(0);
+  state.hospedes.forEach(function(h){
+    if(h.status==='cancelado'||!h.checkin||!h.valor)return;
+    var ci=new Date(h.checkin+'T00:00:00');
+    if(ci.getFullYear()!==ano||ci.getMonth()!==mes)return;
+    var idx=casas.findIndex(function(c){return c.nome===h.casa});
+    if(idx<0)return;
+    deHospedes[idx]+=h.valor;
+  });
+
+  // 2. Receita manual registrada (via modal de edição)
+  var manual=state.receitasMes[k]?state.receitasMes[k].slice():[];
+  while(manual.length<n)manual.push(0);
+
+  // 3. Somar: hóspedes + receita manual adicional
+  return deHospedes.map(function(v,i){
+    return v+(manual[i]||0);
+  });
+}
+function getCustosMes(ano,mes){
+  var k=mesKey(ano,mes);
+  return state.custos.filter(function(c){return c.data===k});
+}
+// ── Modal de confirmação personalizado ────────────────────────
+function openConfirmModal(titulo,msg,labelBtn,callback){
+  document.getElementById('confirmTitle').textContent=titulo;
+  document.getElementById('confirmMsg').textContent=msg;
+  var btn=document.getElementById('confirmBtn');
+  btn.textContent=labelBtn||'Confirmar';
+  btn.onclick=function(){closeOverlay('confirmOverlay');callback();};
+  document.getElementById('confirmOverlay').classList.add('show');
+}
+
+// ── Cache de ocupação (invalidado ao salvar/deletar hóspede) ──
+var _ocupCache={};
+function invalidarCacheOcupacao(){_ocupCache={};}
+
+function getOcupacao(ano,mes){
+  // Não usar cache se _airbnbDias pode ter mudado — cache só por localStorage
+  var k=mesKey(ano,mes);
+  var n=getCasas().length,casas=getCasas();
+  var contagem=new Array(n).fill(0);
+
+  // 1. Contar dias de hóspedes manuais
+  state.hospedes.forEach(function(h){
+    if(h.status==='cancelado'||!h.checkin||!h.checkout)return;
+    var ci=new Date(h.checkin+'T00:00:00');
+    var co=new Date(h.checkout+'T00:00:00');
+    var idx=casas.findIndex(function(c){return c.nome===h.casa});
+    if(idx<0)return;
+    for(var d=new Date(ci);d<co;d.setDate(d.getDate()+1)){
+      if(d.getFullYear()===ano&&d.getMonth()===mes) contagem[idx]++;
+    }
+  });
+
+  // 2. Adicionar dias do Airbnb (iCal) que não estejam cobertos por hóspede manual
+  casas.forEach(function(casa,idx){
+    var ckey=casa.id+'_'+ano+'_'+mes;
+    var diasAirbnb=_icalCache[ckey]?_icalCache[ckey].dias:{};
+    // Mapear dias já contados por hóspedes manuais desta casa
+    var diasManuais={};
+    state.hospedes.forEach(function(h){
+      if(h.status==='cancelado'||!h.checkin||!h.checkout||h.casa!==casa.nome)return;
+      var ci=new Date(h.checkin+'T00:00:00');
+      var co=new Date(h.checkout+'T00:00:00');
+      for(var d=new Date(ci);d<co;d.setDate(d.getDate()+1)){
+        if(d.getFullYear()===ano&&d.getMonth()===mes) diasManuais[d.getDate()]=true;
+      }
+    });
+    // Contar dias Airbnb não cobertos por manual
+    Object.keys(diasAirbnb).forEach(function(dia){
+      if(!diasManuais[parseInt(dia)]) contagem[idx]++;
+    });
+  });
+
+  var manual=state.ocupacaoMes[k]||[];
+  return contagem.map(function(v,i){return v>0?v:(manual[i]||0);});
+}
+
+// ── Notificações ──────────────────────────────────────────────
+function getNotificacoes(){
+  var notifs=[];
+  var hojeMs=hoje().getTime();
+
+  // Check-ins próximos
+  state.hospedes.filter(function(h){return h.status==='confirmado'&&h.checkin}).forEach(function(h){
+    var ci=new Date(h.checkin+'T00:00:00');
+    var diff=Math.round((ci-hojeMs)/86400000);
+    if(diff>=0&&diff<=3){
+      notifs.push({tipo:diff===0?'urgent':'info',titulo:(diff===0?'Check-in hoje: ':'Check-in em '+diff+' dia(s): ')+h.nome,desc:h.casa+' · '+h.checkin,key:'ci_'+h.id});
+    }
+  });
+  // Check-outs próximos
+  state.hospedes.filter(function(h){return h.status==='confirmado'&&h.checkout}).forEach(function(h){
+    var co=new Date(h.checkout+'T00:00:00');
+    var diff=Math.round((co-hojeMs)/86400000);
+    if(diff>=0&&diff<=2){
+      notifs.push({tipo:diff===0?'urgent':'warn',titulo:(diff===0?'Check-out hoje: ':'Check-out em '+diff+' dia(s): ')+h.nome,desc:h.casa+' · '+h.checkout,key:'co_'+h.id});
+    }
+  });
+  // Tarefas vencidas
+  state.tarefas.filter(function(t){return !t.feita&&t.data}).forEach(function(t){
+    var td=new Date(t.data+'T00:00:00');
+    if(td<hoje()){
+      notifs.push({tipo:'urgent',titulo:'Tarefa vencida: '+t.texto,desc:t.casa+' · prazo era '+t.data,key:'tv_'+t.id});
+    }
+  });
+  // Hóspedes pendentes
+  var pend=state.hospedes.filter(function(h){return h.status==='pendente'});
+  if(pend.length) notifs.push({tipo:'warn',titulo:pend.length+' reserva(s) pendente(s)',desc:'Aguardando confirmação ou pagamento',key:'pend'});
+
+  return notifs;
+}
+
+function renderNotificacoes(){
+  var notifs=getNotificacoes();
+  var dot=document.getElementById('notifDot');
+  var count=document.getElementById('notifCount');
+  var list=document.getElementById('notifList');
+  dot.style.display=notifs.length?'block':'none';
+  count.textContent=notifs.length+' item(s)';
+  if(!notifs.length){list.innerHTML='<div class="notif-empty">Tudo em ordem! Nenhum alerta.</div>';return;}
+  list.innerHTML=notifs.map(function(n){
+    return'<div class="notif-item '+n.tipo+'">'
+      +'<div class="nt">'+n.titulo+'</div>'
+      +'<div class="nd">'+n.desc+'</div>'
+      +'</div>';
+  }).join('');
+}
+function toggleNotif(){
+  var p=document.getElementById('notifPanel');
+  p.classList.toggle('show');
+  renderNotificacoes();
+}
+document.addEventListener('click',function(e){
+  var p=document.getElementById('notifPanel');
+  if(!p.contains(e.target)&&e.target.id!=='notifBtn'&&!document.getElementById('notifBtn').contains(e.target)){
+    p.classList.remove('show');
+  }
+});
+
+// ── Navegação ─────────────────────────────────────────────────
+function showPage(p,el){
+  document.querySelectorAll('.page').forEach(function(x){x.classList.remove('active')});
+  document.querySelectorAll('.nav-tab').forEach(function(x){x.classList.remove('active')});
+  document.getElementById('page-'+p).classList.add('active');
+  el.classList.add('active');
+  if(p==='visao'){rebuildHouseSel();renderVisao();}
+  if(p==='hospedes'){renderLista();renderHospedeMetrics();}
+  if(p==='tarefas'){rebuildTarefaFilters();renderTarefas();renderTarefaMetrics();}
+  if(p==='resumo'){rebuildResumoSel();renderResumo();}
+  if(p==='analise'){rebuildAnaliseSel();renderAnalise();}
+  if(p==='imoveis')renderImoveis();
+}
+function rebuildAllSelects(){
+  var casas=getCasas();
+  // selects de casa nos modais
+  [['fCasa','nome'],['cCasa','idx'],['tCasa','nome'],['tEditCasa','nome']].forEach(function(pair){
+    var el=document.getElementById(pair[0]);if(!el)return;
+    var prev=el.value;el.innerHTML='';
+    casas.forEach(function(c,i){
+      var o=document.createElement('option');
+      o.value=pair[1]==='idx'?String(i):c.nome;
+      o.textContent=c.nome;el.appendChild(o);
+    });
+    el.value=prev;
+  });
+}
+function rebuildHouseSel(){
+  var casas=getCasas();
+  var s=document.getElementById('houseSel');
+  s.innerHTML='<button class="house-btn'+(state.houseFilter===0?' active':'')+'" onclick="selectHouse(0,this)">Todas</button>';
+  casas.forEach(function(c,i){
+    s.innerHTML+='<button class="house-btn'+(state.houseFilter===i+1?' active':'')+'" onclick="selectHouse('+(i+1)+',this)">'+c.nome+'</button>';
+  });
+}
+function rebuildResumoSel(){
+  var casas=getCasas();
+  var s=document.getElementById('resumoHouseSel');
+  s.innerHTML='<button class="house-btn'+(state.resumoHouse===0?' active':'')+'" onclick="selectResumoHouse(0,this)">Todas</button>';
+  casas.forEach(function(c,i){
+    s.innerHTML+='<button class="house-btn'+(state.resumoHouse===i+1?' active':'')+'" onclick="selectResumoHouse('+(i+1)+',this)">'+c.nome+'</button>';
+  });
+}
+function rebuildAnaliseSel(){
+  var casas=getCasas();
+  var s=document.getElementById('analiseHouseSel');
+  s.innerHTML='<button class="house-btn'+(state.analiseHouse===0?' active':'')+'" onclick="selectAnaliseHouse(0,this)" style="font-size:12px;padding:4px 10px">Todas</button>';
+  casas.forEach(function(c,i){
+    s.innerHTML+='<button class="house-btn'+(state.analiseHouse===i+1?' active':'')+'" onclick="selectAnaliseHouse('+(i+1)+',this)" style="font-size:12px;padding:4px 10px">'+c.nome+'</button>';
+  });
+}
+function rebuildTarefaFilters(){
+  var casas=getCasas();
+  var c=document.getElementById('tarefaFilters');
+  c.innerHTML='<button class="filter-btn'+(state.tarefaFilter==='todas'?' active':'')+'" onclick="setTarefaFilter(\'todas\',this)">Todas</button>'
+    +'<button class="filter-btn'+(state.tarefaFilter==='pendentes'?' active':'')+'" onclick="setTarefaFilter(\'pendentes\',this)">Pendentes</button>'
+    +'<button class="filter-btn'+(state.tarefaFilter==='feitas'?' active':'')+'" onclick="setTarefaFilter(\'feitas\',this)">Concluídas</button>'
+    +'<button class="filter-btn'+(state.tarefaFilter==='vencidas'?' active':'')+'" onclick="setTarefaFilter(\'vencidas\',this)">Vencidas</button>';
+  casas.forEach(function(c2){
+    c.innerHTML+='<button class="filter-btn'+(state.tarefaFilter===c2.nome?' active':'')+'" onclick="setTarefaFilter(\''+c2.nome+'\',this)">'+c2.nome.split('—')[0].trim()+'</button>';
+  });
+}
+
+function selectHouse(n,el){state.houseFilter=n;document.querySelectorAll('#houseSel .house-btn').forEach(function(b){b.classList.remove('active')});el.classList.add('active');renderVisao();}
+function selectResumoHouse(n,el){state.resumoHouse=n;document.querySelectorAll('#resumoHouseSel .house-btn').forEach(function(b){b.classList.remove('active')});el.classList.add('active');renderResumo();}
+function selectAnaliseHouse(n,el){state.analiseHouse=n;document.querySelectorAll('#analiseHouseSel .house-btn').forEach(function(b){b.classList.remove('active')});el.classList.add('active');renderAnalise();}
+
+// ── VISÃO GERAL ───────────────────────────────────────────────
+function renderVisao(){
+  var casas=getCasas(),hf=state.houseFilter;
+  var rec=getReceitas(state.calAno,state.calMes);
+  var ocup=getOcupacao(state.calAno,state.calMes);
+  var custosMes=getCustosMes(state.calAno,state.calMes);
+  var r=hf===0?rec.reduce(function(a,b){return a+b},0):rec[hf-1]||0;
+  var c=hf===0?custosMes.reduce(function(s,cu){return s+cu.valor},0):custosMes.filter(function(cu){return cu.casa===hf-1}).reduce(function(s,cu){return s+cu.valor},0);
+  var comissao=Math.round(r*0.20);
+  var l=r-c,roi=c>0?Math.round(l/c*100):0;
+  var o=hf===0?(casas.length?Math.round(ocup.reduce(function(a,b){return a+b},0)/casas.length):0):ocup[hf-1]||0;
+  var pend=state.hospedes.filter(function(h){return h.status==='pendente'}).length;
+  var altas=state.tarefas.filter(function(t){return t.prio==='alta'&&!t.feita}).length;
+  var notifs=getNotificacoes();
+
+  document.getElementById('metrics').innerHTML=
+    '<div class="metric"><div class="label">Receita</div><div class="value">'+fmt(r)+'</div><div class="sub">'+fmtMes(state.calAno,state.calMes)+'</div></div>'
+    +'<div class="metric"><div class="label">Custos</div><div class="value">'+fmt(c)+'</div><div class="sub down">'+(r>0?Math.round(c/r*100):0)+'% da receita</div></div>'
+    +'<div class="metric"><div class="label">Lucro líquido</div><div class="value">'+fmt(l)+'</div><div class="sub '+(l>=0?'up':'down')+'">'+(r>0?Math.round(l/r*100):0)+'% margem</div></div>'
+    +'<div class="metric"><div class="label">Comissões (20%)</div><div class="value down">'+fmt(comissao)+'</div><div class="sub down">sobre receita bruta</div></div>'
+    +'<div class="metric"><div class="label">Ocupação média</div><div class="value">'+o+' dias</div><div class="sub '+(o/30*100>=BENCHMARK_OCUPACAO?'up':'neutral')+'">'+Math.round(o/30*100)+'% do mês</div></div>'
+    +'<div class="metric"><div class="label">ROI</div><div class="value">'+roi+'%</div><div class="sub '+(roi>=50?'up':'down')+'">'+(roi>=50?'Ótimo':'Atenção')+'</div></div>'
+    +'<div class="metric"><div class="label">Pendentes</div><div class="value '+(pend>0?'down':'')+'">'+pend+'</div><div class="sub">reservas</div></div>'
+    +'<div class="metric"><div class="label">Alertas</div><div class="value '+(notifs.length>0?'down':'up')+'">'+notifs.length+'</div><div class="sub notif-link" onclick="toggleNotif()">'+(notifs.length?'ver detalhes':'ok')+'</div></div>';
+
+  renderCustos();renderCal();renderChart();renderOcupacaoVisao();renderGargalos();
+  renderNotificacoes();
+}
+
+function renderCustos(){
+  var casas=getCasas(),hf=state.houseFilter;
+  var k=mesKey(state.calAno,state.calMes);
+  var lista=state.custos.filter(function(c){return c.data===k});
+  if(hf>0) lista=lista.filter(function(c){return c.casa===hf-1});
+  var html='';
+  if(!lista.length) html='<div class="empty" style="padding:.5rem 0">Nenhum custo neste mês.</div>';
+  lista.forEach(function(c){
+    var nomeCasa=(casas[c.casa]||{}).nome||'—';
+    html+='<div class="custo-row">'
+      +'<div style="flex:1;min-width:0"><div style="font-size:13px;color:var(--text2)">'+c.nome+'</div>'
+      +'<div style="font-size:11px;color:var(--text3)">'+nomeCasa+'</div></div>'
+      +'<span style="font-weight:500;font-size:13px;flex-shrink:0">'+fmt(c.valor)+'</span>'
+      +'<button class="icon-btn" data-cid="'+c.id+'" onclick="openCustoModal(Number(this.dataset.cid))" aria-label="Editar" title="Editar">✏ </button>'
+      +'<button class="icon-btn del" data-cid="'+c.id+'" onclick="deleteCusto(Number(this.dataset.cid))" aria-label="Apagar" title="Apagar">✕</button>'
+      +'</div>';
+  });
+  var tot=lista.reduce(function(s,c){return s+c.valor},0);
+  var rec=getReceitas(state.calAno,state.calMes);
+  var totRec=hf===0?rec.reduce(function(a,b){return a+b},0):rec[hf-1]||0;
+  var pct=totRec>0?Math.min(Math.round(tot/totRec*100),100):0;
+  html+='<div style="display:flex;justify-content:space-between;font-size:13px;padding:7px 0;font-weight:500"><span>Total</span><span style="color:#A32D2D">'+fmt(tot)+'</span></div>';
+  html+='<div class="progbar"><div class="progfill" style="width:'+pct+'%;background:'+(pct>45?'#E24B4A':'#639922')+'"></div></div>';
+  html+='<div style="font-size:11px;color:var(--text3);margin-top:5px">'+pct+'% da receita em custos</div>';
+  document.getElementById('custos').innerHTML=html;
+}
+
+// ── iCal Airbnb ───────────────────────────────────────────────
+var _icalCache={};
+var _airbnbDias={}; // {nomeCasa:{dia:{summary,start,end}}}
+
+function parseIcal(txt){
+  var out=[];
+  var blocos=txt.split('BEGIN:VEVENT');
+  for(var i=1;i<blocos.length;i++){
+    var b=blocos[i];
+    var summary=(b.match(/SUMMARY:([^\r\n]+)/)||[])[1]||'Airbnb';
+    var ds=(b.match(/DTSTART[^:]*:([^\r\n]+)/)||[])[1]||'';
+    var de=(b.match(/DTEND[^:]*:([^\r\n]+)/)||[])[1]||'';
+    if(!ds||!de)continue;
+    function pd(s){s=s.replace(/\D/g,'').slice(0,8);return new Date(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8));}
+    var start=pd(ds.trim()),end=pd(de.trim());
+    if(!isNaN(start)&&!isNaN(end))out.push({start:start,end:end,summary:summary.trim()});
+  }
+  return out;
+}
+
+function icalDiasDoMes(periodos,ano,mes){
+  var dias={};
+  periodos.forEach(function(p){
+    for(var d=new Date(p.start);d<p.end;d.setDate(d.getDate()+1)){
+      if(d.getFullYear()===ano&&d.getMonth()===mes)
+        dias[d.getDate()]={summary:p.summary,start:p.start,end:p.end};
+    }
+  });
+  return dias;
+}
+
+function carregarAirbnb(casas,ano,mes,cb){
+  var comIcal=casas.filter(function(c){return c.icalUrl;});
+  if(!comIcal.length){cb({});return;}
+  var res={},pend=comIcal.length;
+  function done(){if(--pend===0)cb(res);}
+
+  comIcal.forEach(function(c){
+    var ckey=c.id+'_'+ano+'_'+mes;
+    if(_icalCache[ckey]&&(Date.now()-_icalCache[ckey].ts)<1800000){
+      res[c.nome]=_icalCache[ckey].dias;
+      done();return;
+    }
+
+    // Proxies em cascata — tenta o próximo se o atual falhar
+    var proxies=[
+      'https://api.allorigins.win/get?url=',
+      'https://corsproxy.io/?',
+      'https://api.codetabs.com/v1/proxy?quest='
+    ];
+
+    function tentarProxy(idx){
+      if(idx>=proxies.length){
+        console.warn('iCal '+c.nome+': todos os proxies falharam');
+        res[c.nome]={};done();return;
+      }
+      var url=proxies[idx]+encodeURIComponent(c.icalUrl);
+      console.log('iCal '+c.nome+' tentando proxy '+idx+': '+proxies[idx]);
+      fetch(url)
+        .then(function(r){
+          console.log('iCal '+c.nome+' proxy '+idx+' status: '+r.status);
+          if(!r.ok)throw new Error('HTTP '+r.status);
+          return r.text();
+        })
+        .then(function(txt){
+          console.log('iCal '+c.nome+' proxy '+idx+' resposta (100 chars): '+txt.slice(0,100));
+          var icsText=txt;
+          if(txt.trim().startsWith('{')){
+            try{icsText=JSON.parse(txt).contents||txt;}catch(e){}
+          }
+          if(!icsText.includes('BEGIN:VCALENDAR')){
+            console.warn('iCal '+c.nome+' proxy '+idx+' não retornou iCal válido, tentando próximo');
+            throw new Error('Resposta não é um iCal válido');
+          }
+          var periodos=parseIcal(icsText);
+          var dias=icalDiasDoMes(periodos,ano,mes);
+          _icalCache[ckey]={ts:Date.now(),dias:dias};
+          res[c.nome]=dias;
+          console.log('iCal '+c.nome+' OK — '+periodos.length+' períodos carregados');
+          done();
+        })
+        .catch(function(e){
+          console.warn('iCal '+c.nome+' proxy '+idx+' falhou: '+e.message);
+          tentarProxy(idx+1);
+        });
+    }
+
+    tentarProxy(0);
+  });
+}
+
+function calMes(delta){
+  state.calMes+=delta;
+  if(state.calMes<0){state.calMes=11;state.calAno--;}
+  if(state.calMes>11){state.calMes=0;state.calAno++;}
+  saveState();
+  renderCal();
+  carregarAirbnb(getCasas(),state.calAno,state.calMes,function(r){
+    _airbnbDias=r;
+    renderCal();
+    renderOcupacaoVisao();
+    renderGargalos();
+  });
+  var rec=getReceitas(state.calAno,state.calMes);
+  var casas=getCasas(),hf=state.houseFilter;
+  document.getElementById('metrics').querySelectorAll('.metric')[0].querySelector('.value').textContent=
+    fmt(hf===0?rec.reduce(function(a,b){return a+b},0):rec[hf-1]||0);
+  renderCustos();renderChart();renderOcupacaoVisao();renderGargalos();
+}
+
+function renderCal(){
+  var casas=getCasas(),hf=state.houseFilter;
+  var casaNome=hf>0&&casas[hf-1]?casas[hf-1].nome:null;
+  var ano=state.calAno,mes=state.calMes;
+  document.getElementById('calTitle').textContent=fmtMes(ano,mes);
+  var cal=document.getElementById('cal');
+  var heads=Array.prototype.slice.call(cal.querySelectorAll('.cal-head'));
+  cal.innerHTML='';heads.forEach(function(h){cal.appendChild(h)});
+
+  var totalDias=diasNoMes(ano,mes);
+  var pDia=new Date(ano,mes,1).getDay();
+
+  // Hóspedes manuais — filtrar por casa se selecionada
+  var diasOcup={},diasManut={},diasCO={};
+  state.hospedes.forEach(function(h){
+    if(h.status==='cancelado'||!h.checkin||!h.checkout)return;
+    if(casaNome&&h.casa!==casaNome)return;
+    var ci=new Date(h.checkin+'T00:00:00');
+    var co=new Date(h.checkout+'T00:00:00');
+    for(var d=new Date(ci);d<co;d.setDate(d.getDate()+1)){
+      if(d.getFullYear()===ano&&d.getMonth()===mes) diasOcup[d.getDate()]=true;
+    }
+    if(co.getFullYear()===ano&&co.getMonth()===mes) diasCO[co.getDate()]=true;
+  });
+  // Tarefas — filtrar por casa
+  state.tarefas.forEach(function(t){
+    if(!t.data||t.feita)return;
+    if(casaNome&&t.casa!==casaNome)return;
+    var td=new Date(t.data+'T00:00:00');
+    if(td.getFullYear()===ano&&td.getMonth()===mes&&t.prio==='alta') diasManut[td.getDate()]=true;
+  });
+  // Airbnb — filtrar por casa
+  var diasAirbnb={};
+  Object.keys(_airbnbDias).forEach(function(nome){
+    if(casaNome&&nome!==casaNome)return;
+    var dias=_airbnbDias[nome]||{};
+    Object.keys(dias).forEach(function(d){
+      var n=parseInt(d);
+      if(!diasOcup[n]) diasAirbnb[n]=dias[d];
+    });
+  });
+
+  for(var i=0;i<pDia;i++){var vz=document.createElement('div');vz.className='cal-day vazio';cal.appendChild(vz);}
+  for(var d=1;d<=totalDias;d++){
+    var el=document.createElement('div');
+    var st='livre';var abInfo=null;
+    if(diasOcup[d]) st='ocupado';
+    else if(diasAirbnb[d]){st='airbnb';abInfo=diasAirbnb[d];}
+    else if(diasManut[d]) st='manutencao';
+    if(diasCO[d]&&st==='livre') st='checkout-only';
+    el.className='cal-day '+st;
+    if(ano===hoje().getFullYear()&&mes===hoje().getMonth()&&d===hoje().getDate()) el.classList.add('today');
+    el.textContent=d;
+    if(st!=='livre'&&st!=='vazio'){
+      (function(dia,s,ab){
+        el.addEventListener('click',function(){
+          if(ab) openCalDiaAirbnb(ano,mes,dia,ab,casaNome);
+          else openCalDia(ano,mes,dia,s,casaNome);
+        });
+      })(d,st,abInfo);
+    }
+    cal.appendChild(el);
+  }
+}
+
+function openCalDia(ano,mes,dia,st,casaNome){
+  var dataAlvo=new Date(ano,mes,dia);
+  var hospDia=state.hospedes.filter(function(h){
+    if(h.status==='cancelado'||!h.checkin||!h.checkout)return false;
+    if(casaNome&&h.casa!==casaNome)return false;
+    var ci=new Date(h.checkin+'T00:00:00'),co=new Date(h.checkout+'T00:00:00');
+    return dataAlvo>=ci&&dataAlvo<co;
+  });
+  var tarefasDia=state.tarefas.filter(function(t){
+    if(!t.data||t.feita)return false;
+    if(casaNome&&t.casa!==casaNome)return false;
+    var td=new Date(t.data+'T00:00:00');
+    return td.getFullYear()===ano&&td.getMonth()===mes&&td.getDate()===dia;
+  });
+  var checkout=state.hospedes.filter(function(h){
+    if(h.status==='cancelado'||!h.checkout)return false;
+    if(casaNome&&h.casa!==casaNome)return false;
+    var co=new Date(h.checkout+'T00:00:00');
+    return co.getFullYear()===ano&&co.getMonth()===mes&&co.getDate()===dia;
+  });
+
+  var html='<h3 style="margin-bottom:1rem">'+dia+' de '+MESES[mes]+' de '+ano
+    +(casaNome?' <span style="font-size:13px;font-weight:400;color:var(--text2)">· '+casaNome+'</span>':'')+'</h3>';
+  if(checkout.length){
+    html+='<div style="background:var(--green-bg);color:var(--green-text);border-radius:var(--radius);padding:.6rem 1rem;font-size:13px;margin-bottom:10px;font-weight:500">Check-out hoje: '+(checkout.map(function(h){return h.nome}).join(', '))+'</div>';
+  }
+  if(st==='manutencao'){
+    html+='<div style="background:var(--amber-bg);color:var(--amber-text);border-radius:var(--radius);padding:.6rem 1rem;font-size:13px;margin-bottom:10px;font-weight:500">Manutenção agendada</div>';
+  }
+  if(hospDia.length){
+    hospDia.forEach(function(h){
+      var a=ac(h.id),d=diasEntre(h.checkin,h.checkout);
+      html+='<div style="padding:10px 0;border-bottom:.5px solid var(--border)">'
+        +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+        +'<div style="width:36px;height:36px;border-radius:50%;background:'+a.bg+';color:'+a.text+';display:flex;align-items:center;justify-content:center;font-weight:500;font-size:12px;flex-shrink:0">'+initials(h.nome)+'</div>'
+        +'<div><div style="font-size:14px;font-weight:500">'+h.nome+'<span class="badge-orig badge" style="font-size:10px">'+h.origem+'</span></div>'
+        +'<div style="font-size:12px;color:var(--text2)">'+h.casa+' · '+h.numHosp+' hóspede(s)</div></div></div>'
+        +'<table class="dtable">'
+        +'<tr><td class="dl">Check-in</td><td class="dr">'+h.checkin+'</td></tr>'
+        +'<tr><td class="dl">Check-out</td><td class="dr">'+h.checkout+'</td></tr>'
+        +'<tr><td class="dl">Diárias</td><td class="dr">'+d+' dias</td></tr>'
+        +(h.valor>0?'<tr><td class="dl">Valor</td><td class="dr">'+fmt(h.valor)+'</td></tr>':'')
+        +'</table>'
+        +(h.obs?'<div class="obs-box" style="margin-top:8px">'+h.obs+'</div>':'')+'</div>';
+    });
+  }
+  if(tarefasDia.length){
+    html+='<div style="font-size:12px;font-weight:500;color:var(--text2);margin:10px 0 6px;text-transform:uppercase;letter-spacing:.04em">Tarefas do dia</div>';
+    tarefasDia.forEach(function(t){
+      html+='<div style="font-size:13px;padding:5px 0;border-bottom:.5px solid var(--border)">'+t.texto+'<span class="'+PC[t.prio]+'">'+PL[t.prio]+'</span></div>';
+    });
+  }
+  if(!hospDia.length&&!tarefasDia.length&&!checkout.length){
+    html+='<div class="empty">Nenhuma informação para este dia.</div>';
+  }
+  html+='<div class="modal-btns" style="margin-top:1rem"><button class="btn-cancel" onclick="closeOverlay(\'calDiaOverlay\')">Fechar</button></div>';
+  document.getElementById('calDiaContent').innerHTML=html;
+  document.getElementById('calDiaOverlay').classList.add('show');
+}
+
+function openCalDiaAirbnb(ano,mes,dia,ab,casaNome){
+  var ci=ab.start?ab.start.toLocaleDateString('pt-BR'):'—';
+  var co=ab.end?ab.end.toLocaleDateString('pt-BR'):'—';
+  var nd=ab.start&&ab.end?Math.round((ab.end-ab.start)/86400000):0;
+  var html='<h3 style="margin-bottom:1rem">'+dia+' de '+MESES[mes]+' de '+ano
+    +(casaNome?' <span style="font-size:13px;font-weight:400;color:var(--text2)">· '+casaNome+'</span>':'')+'</h3>';
+  html+='<div style="background:#FFD8B0;color:#7A2E00;border-radius:var(--radius);padding:.75rem 1rem;font-size:13px;margin-bottom:12px;display:flex;align-items:center;gap:10px">'
+    +'<span style="font-size:18px">🏠</span>'
+    +'<div><div style="font-weight:500">Reserva via Airbnb</div>'
+    +(ab.summary&&ab.summary!=='Airbnb'?'<div style="font-size:12px;margin-top:2px;opacity:.85">'+ab.summary+'</div>':'')
+    +'</div></div>';
+  html+='<table class="dtable">'
+    +'<tr><td class="dl">Check-in</td><td class="dr">'+ci+'</td></tr>'
+    +'<tr><td class="dl">Check-out</td><td class="dr">'+co+'</td></tr>'
+    +'<tr><td class="dl">Diárias</td><td class="dr">'+nd+'</td></tr>'
+    +'</table>';
+  html+='<div style="background:var(--info-bg);color:var(--info-text);border-radius:var(--radius);padding:.65rem 1rem;font-size:12px;margin-top:12px">'
+    +'ℹ Dados do Airbnb são somente leitura. Use o botão abaixo para registrar hóspede e valor.</div>';
+  html+='<div class="modal-btns" style="margin-top:1rem">'
+    +'<button class="btn-cancel" onclick="closeOverlay(\'calDiaOverlay\')">Fechar</button>'
+    +'<button class="btn-save" onclick="closeOverlay(\'calDiaOverlay\');openHospedeModal(null)">+ Registrar hóspede</button>'
+    +'</div>';
+  document.getElementById('calDiaContent').innerHTML=html;
+  document.getElementById('calDiaOverlay').classList.add('show');
+}
+
+var chartInst=null;
+function renderChart(){
+  var ctx=document.getElementById('chartReceitas');if(chartInst)chartInst.destroy();
+  var casas=getCasas(),hf=state.houseFilter;
+  var meses4=[];var labels=[];
+  for(var i=3;i>=0;i--){var m=state.calMes-i,a=state.calAno;while(m<0){m+=12;a--;}meses4.push({ano:a,mes:m});labels.push(MESES[m].slice(0,3));}
+  var ds=hf===0
+    ?casas.map(function(c,ci){return{label:c.nome,data:meses4.map(function(m){return getReceitas(m.ano,m.mes)[ci]||0}),backgroundColor:c.cor+'33',borderColor:c.cor,borderWidth:2,tension:.35,fill:true,pointRadius:3}})
+    :[{label:casas[hf-1].nome,data:meses4.map(function(m){return getReceitas(m.ano,m.mes)[hf-1]||0}),backgroundColor:casas[hf-1].cor+'33',borderColor:casas[hf-1].cor,borderWidth:2,tension:.35,fill:true,pointRadius:3}];
+  chartInst=new Chart(ctx,{type:'line',data:{labels:labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return'R$'+Math.round(v/1000)+'k'},font:{size:11}},grid:{color:'rgba(128,128,128,.1)'}},x:{ticks:{font:{size:11}},grid:{display:false}}}}});
+}
+
+function renderOcupacaoVisao(){
+  var casas=getCasas(),hf=state.houseFilter;
+  var ocup=getOcupacao(state.calAno,state.calMes);
+  var list=hf===0?casas.map(function(_,i){return i}):[hf-1];
+  document.getElementById('ocupacao').innerHTML=list.map(function(i){
+    var d=ocup[i]||0,p=Math.round(d/30*100),cor=p>=BENCHMARK_OCUPACAO?'#639922':p>=40?'#BA7517':'#E24B4A';
+    return'<div style="margin-bottom:12px">'
+      +'<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span style="color:var(--text2)">'+casas[i].nome+'</span>'
+      +'<span style="font-weight:500">'+d+' dias <span style="font-weight:400;color:var(--text3)">('+p+'%)</span></span></div>'
+      +'<div class="benchmark-bar"><div class="progfill" style="width:'+p+'%;background:'+cor+';height:10px;border-radius:5px"></div>'
+      +'<div class="benchmark-marker" style="left:'+BENCHMARK_OCUPACAO+'%"></div></div>'
+      +'<div style="font-size:10px;color:var(--text3);margin-top:3px">Linha vermelha = benchmark do setor ('+BENCHMARK_OCUPACAO+'%)</div>'
+      +'</div>';
+  }).join('');
+}
+
+function renderGargalos(){
+  var casas=getCasas();
+  var rec=getReceitas(state.calAno,state.calMes);
+  var ocup=getOcupacao(state.calAno,state.calMes);
+  var auto=[];
+  ocup.forEach(function(d,i){if(d<Math.round(diasNoMes(state.calAno,state.calMes)*0.4)&&casas[i]) auto.push({tipo:'red',titulo:'Baixa ocupação: '+casas[i].nome,desc:d+' dias ('+Math.round(d/30*100)+'%). Meta: acima de 40%.',auto:true})});
+  rec.forEach(function(r,i){
+    if(!casas[i])return;
+    var c=getCustosMes(state.calAno,state.calMes).filter(function(cu){return cu.casa===i}).reduce(function(s,cu){return s+cu.valor},0);
+    if(r>0&&c/r>.45) auto.push({tipo:'warn',titulo:'Custo alto: '+casas[i].nome,desc:'Custos = '+Math.round(c/r*100)+'% da receita. Meta: abaixo de 40%.',auto:true});
+  });
+  state.tarefas.filter(function(t){return t.prio==='alta'&&!t.feita}).forEach(function(t){
+    var venc=t.data&&new Date(t.data+'T00:00:00')<hoje();
+    auto.push({tipo:venc?'red':'warn',titulo:(venc?'⚠ Tarefa vencida: ':'Tarefa urgente: ')+t.casa,desc:t.texto+(t.data?' · prazo: '+t.data:''),auto:true});
+  });
+  var todos=auto.concat(state.gargalosExtras);
+  if(!todos.length){document.getElementById('gargalos').innerHTML='<div class="gargalo ok"><div class="gargalo-body"><div class="gargalo-title">Tudo sob controle!</div><div class="gargalo-desc">Nenhum gargalo crítico identificado.</div></div></div>';return;}
+  document.getElementById('gargalos').innerHTML=todos.map(function(it){
+    var acts=it.auto?''
+      :'<div class="gargalo-actions"><button class="icon-btn" data-gid="'+it.id+'" onclick="openGargaloModal(Number(this.dataset.gid))" aria-label="Editar alerta" title="Editar">✏</button>'
+      +'<button class="icon-btn del" data-gid="'+it.id+'" onclick="deleteGargalo(Number(this.dataset.gid))" aria-label="Apagar alerta" title="Apagar">✕</button></div>';
+    return'<div class="gargalo '+it.tipo+'"><div class="gargalo-body"><div class="gargalo-title">'+it.titulo+'</div><div class="gargalo-desc">'+it.desc+'</div></div>'+acts+'</div>';
+  }).join('');
+}
+
+// ── RECEITAS ──────────────────────────────────────────────────
+function openReceitaModal(){
+  var casas=getCasas(),ano=state.calAno,mes=state.calMes;
+  var k=mesKey(ano,mes);
+  // Calcular receita de hóspedes para mostrar como referência
+  var deHospedes=new Array(casas.length).fill(0);
+  state.hospedes.forEach(function(h){
+    if(h.status==='cancelado'||!h.checkin||!h.valor)return;
+    var ci=new Date(h.checkin+'T00:00:00');
+    if(ci.getFullYear()!==ano||ci.getMonth()!==mes)return;
+    var idx=casas.findIndex(function(c){return c.nome===h.casa});
+    if(idx<0)return;
+    deHospedes[idx]+=h.valor;
+  });
+  var manual=state.receitasMes[k]?state.receitasMes[k].slice():[];
+  while(manual.length<casas.length)manual.push(0);
+
+  var html='<h3>Receitas adicionais — '+fmtMes(ano,mes)+'</h3>';
+  html+='<p style="font-size:12px;color:var(--text2);margin-bottom:1rem;line-height:1.5">Receitas dos hóspedes cadastrados são calculadas automaticamente. Use este campo apenas para receitas <strong>não registradas como hóspede</strong> (ex: locações avulsas, taxas extras).</p>';
+  casas.forEach(function(c,i){
+    html+='<div class="form-row">'
+      +'<label>'+c.nome+' — receita adicional (R$)'
+      +(deHospedes[i]>0?' <span style="font-weight:400;color:var(--text3)">(hóspedes: '+fmt(deHospedes[i])+')</span>':'')
+      +'</label>'
+      +'<input id="rVal'+i+'" type="number" value="'+(manual[i]||0)+'" placeholder="0"/>'
+      +'</div>';
+  });
+  html+='<div class="modal-btns"><button class="btn-cancel" onclick="closeOverlay(\'receitaOverlay\')">Cancelar</button><button class="btn-save" onclick="saveReceitas()">Salvar</button></div>';
+  document.getElementById('receitaModal').innerHTML=html;
+  document.getElementById('receitaOverlay').classList.add('show');
+}
+function saveReceitas(){
+  var casas=getCasas(),k=mesKey(state.calAno,state.calMes);
+  state.receitasMes[k]=casas.map(function(_,i){return parseFloat(document.getElementById('rVal'+i).value)||0});
+  saveState();closeOverlay('receitaOverlay');renderVisao();
+}
+
+// ── CUSTOS ────────────────────────────────────────────────────
+function openCustoModal(cid){
+  document.getElementById('cId').value=cid!=null?String(cid):'';
+  if(cid!=null){
+    var c=state.custos.find(function(x){return Number(x.id)===Number(cid)});if(!c)return;
+    document.getElementById('custoModalTitle').textContent='Editar custo';
+    document.getElementById('cNome').value=c.nome;
+    document.getElementById('cCasa').value=String(c.casa);
+    document.getElementById('cData').value=c.data||mesKey(state.calAno,state.calMes);
+    document.getElementById('cValor').value=c.valor;
+  }else{
+    document.getElementById('custoModalTitle').textContent='Adicionar custo';
+    document.getElementById('cNome').value='';
+    document.getElementById('cCasa').value='0';
+    document.getElementById('cData').value=mesKey(state.calAno,state.calMes);
+    document.getElementById('cValor').value='';
+  }
+  document.getElementById('custoOverlay').classList.add('show');
+}
+function saveCusto(){
+  var nome=document.getElementById('cNome').value.trim()||'Custo';
+  var casa=parseInt(document.getElementById('cCasa').value);
+  var data=document.getElementById('cData').value||mesKey(state.calAno,state.calMes);
+  var val=parseFloat(document.getElementById('cValor').value)||0;
+  var rawId=document.getElementById('cId').value;var id=rawId!==''?Number(rawId):null;
+  if(id!=null){var c=state.custos.find(function(x){return Number(x.id)===id});if(c){c.nome=nome;c.casa=casa;c.data=data;c.valor=val;}}
+  else state.custos.push({id:state.nextCid++,nome:nome,casa:casa,data:data,valor:val});
+  saveState();closeOverlay('custoOverlay');renderCustos();
+}
+function deleteCusto(id){
+  openConfirmModal('Apagar custo','Este custo será removido permanentemente.','Apagar',function(){
+    state.custos=state.custos.filter(function(c){return Number(c.id)!==Number(id)});
+    saveState();renderCustos();
+  });
+}
+
+// ── GARGALOS ──────────────────────────────────────────────────
+function openGargaloModal(gid){
+  document.getElementById('gId').value=gid!=null?String(gid):'';
+  if(gid!=null){
+    var g=state.gargalosExtras.find(function(x){return Number(x.id)===Number(gid)});if(!g)return;
+    document.getElementById('gargaloModalTitle').textContent='Editar alerta';
+    document.getElementById('gTitulo').value=g.titulo;document.getElementById('gDesc').value=g.desc;document.getElementById('gTipo').value=g.tipo;
+  }else{document.getElementById('gargaloModalTitle').textContent='Novo alerta';document.getElementById('gTitulo').value='';document.getElementById('gDesc').value='';document.getElementById('gTipo').value='warn';}
+  document.getElementById('gargaloOverlay').classList.add('show');
+}
+function saveGargalo(){
+  var titulo=document.getElementById('gTitulo').value.trim();if(!titulo){alert('Informe o título.');return;}
+  var rawId=document.getElementById('gId').value;var id=rawId!==''?Number(rawId):null;
+  if(id!=null){var g=state.gargalosExtras.find(function(x){return Number(x.id)===id});if(g){g.titulo=titulo;g.desc=document.getElementById('gDesc').value;g.tipo=document.getElementById('gTipo').value;}}
+  else state.gargalosExtras.push({id:state.nextGid++,titulo:titulo,desc:document.getElementById('gDesc').value,tipo:document.getElementById('gTipo').value});
+  saveState();closeOverlay('gargaloOverlay');renderGargalos();
+}
+function deleteGargalo(id){
+  openConfirmModal('Remover alerta','Este alerta será removido permanentemente.','Remover',function(){
+    state.gargalosExtras=state.gargalosExtras.filter(function(g){return Number(g.id)!==Number(id)});
+    saveState();renderGargalos();
+  });
+}
+
+// ── HÓSPEDES ─────────────────────────────────────────────────
+function setFilter(s,el){
+  state.filterStatus=s;
+  document.getElementById('searchInput').value='';
+  document.querySelectorAll('#hospedeFilters .filter-btn').forEach(function(b){b.classList.remove('active')});
+  el.classList.add('active');renderLista();
+}
+function renderLista(){
+  var q=(document.getElementById('searchInput').value||'').toLowerCase();
+  var list=state.hospedes.filter(function(h){
+    var mf=state.filterStatus==='todos'||h.status===state.filterStatus
+      ||(state.filterStatus==='airbnb'&&h.origem==='Airbnb');
+    var mq=!q||[h.nome,h.casa,h.email||'',h.origem||''].some(function(v){return v.toLowerCase().indexOf(q)>=0});
+    return mf&&mq;
+  });
+  list.sort(function(a,b){
+    var order={pendente:0,confirmado:1,cancelado:2};
+    if(order[a.status]!==order[b.status]) return order[a.status]-order[b.status];
+    return(a.checkin||'')>(b.checkin||'')?1:-1;
+  });
+  document.getElementById('lista').innerHTML=list.length?list.map(function(h){
+    var a=ac(h.id),d=diasEntre(h.checkin,h.checkout);
+    var proxCi=h.checkin&&Math.round((new Date(h.checkin+'T00:00:00')-hoje())/86400000);
+    var proximoTag=proxCi!=null&&proxCi>=0&&proxCi<=3&&h.status==='confirmado'
+      ?'<span style="font-size:10px;background:var(--info-bg);color:var(--info-text);padding:1px 5px;border-radius:4px;margin-left:5px">'+(proxCi===0?'Hoje!':'Em '+proxCi+'d')+'</span>':'';
+    var airbnbBadge=h.origem==='Airbnb'&&h.nomeProvisorio
+      ?'<span style="font-size:10px;background:#FFD8B0;color:#7A2E00;padding:1px 5px;border-radius:4px;margin-left:4px">✏ nome provisório</span>':'';
+    return'<div class="hospede-row">'
+      +'<div class="avatar" style="background:'+a.bg+';color:'+a.text+'" data-hid="'+h.id+'" onclick="openDetail(Number(this.dataset.hid))">'+initials(h.nome)+'</div>'
+      +'<div class="hbody" data-hid="'+h.id+'" onclick="openDetail(Number(this.dataset.hid))">'
+      +'<div class="hname">'+h.nome+'<span class="badge '+SC[h.status]+'">'+SL[h.status]+'</span><span class="badge badge-orig">'+h.origem+'</span>'+proximoTag+airbnbBadge+'</div>'
+      +'<div class="hmeta">'+h.casa+' · '+(h.checkin||'—')+' → '+(h.checkout||'—')+' ('+d+' dias) · '+h.numHosp+' hóspede(s)</div>'
+      +(h.nota>0?'<div class="stars">'+stars(h.nota)+'</div>':'')
+      +'</div>'
+      +'<div class="hright" style="font-size:13px;font-weight:500">'+(h.valor>0?fmt(h.valor):'—')+'</div>'
+      +'<div style="display:flex;gap:0;flex-shrink:0">'
+      +'<button class="icon-btn" data-hid="'+h.id+'" onclick="openHospedeModal(Number(this.dataset.hid))" aria-label="Editar hóspede" title="Editar">✏</button>'
+      +'<button class="icon-btn del" data-hid="'+h.id+'" onclick="deleteHospede(Number(this.dataset.hid))" aria-label="Apagar hóspede" title="Apagar">✕</button>'
+      +'</div></div>';
+  }).join(''):'<div class="empty">Nenhum hóspede encontrado.</div>';
+}
+function renderHospedeMetrics(){
+  var conf=state.hospedes.filter(function(h){return h.status==='confirmado'});
+  var totalRec=conf.reduce(function(s,h){return s+h.valor},0);
+  var notas=state.hospedes.filter(function(h){return h.nota>0});
+  var med=notas.length?Math.round(notas.reduce(function(s,h){return s+h.nota},0)/notas.length*10)/10:0;
+  var pend=state.hospedes.filter(function(h){return h.status==='pendente'}).length;
+  var totalD=conf.reduce(function(s,h){return s+diasEntre(h.checkin,h.checkout)},0);
+  var totalHosp=conf.reduce(function(s,h){return s+(h.numHosp||1)},0);
+  document.getElementById('hospedeMetrics').innerHTML=
+    '<div class="metric"><div class="label">Total</div><div class="value">'+state.hospedes.length+'</div><div class="sub">'+conf.length+' confirmados</div></div>'
+    +'<div class="metric"><div class="label">Receita confirmada</div><div class="value">'+fmt(totalRec)+'</div></div>'
+    +'<div class="metric"><div class="label">Avaliação média</div><div class="value">'+(med>0?med:'—')+'</div><div class="sub">'+notas.length+' avaliações</div></div>'
+    +'<div class="metric"><div class="label">Pendências</div><div class="value '+(pend>0?'down':'')+'">'+pend+'</div></div>'
+    +'<div class="metric"><div class="label">Diárias vendidas</div><div class="value">'+totalD+'</div></div>'
+    +'<div class="metric"><div class="label">Total de pessoas</div><div class="value">'+totalHosp+'</div></div>';
+}
+function openHospedeModal(hid){
+  document.getElementById('fId').value=hid!=null?String(hid):'';
+  if(hid!=null){
+    var h=state.hospedes.find(function(x){return Number(x.id)===Number(hid)});if(!h)return;
+    document.getElementById('hospedeModalTitle').textContent='Editar hóspede';
+    document.getElementById('fNome').value=h.nome;document.getElementById('fTel').value=h.tel||'';
+    document.getElementById('fEmail').value=h.email||'';document.getElementById('fCasa').value=h.casa;
+    document.getElementById('fStatus').value=h.status;document.getElementById('fIn').value=h.checkin||'';
+    document.getElementById('fOut').value=h.checkout||'';document.getElementById('fValor').value=h.valor||'';
+    document.getElementById('fNota').value=h.nota||'';document.getElementById('fObs').value=h.obs||'';
+    document.getElementById('fOrigem').value=h.origem||'Direto';document.getElementById('fNumHosp').value=h.numHosp||1;
+  }else{
+    document.getElementById('hospedeModalTitle').textContent='Novo hóspede';
+    ['fNome','fTel','fEmail','fValor','fNota','fObs','fIn','fOut'].forEach(function(i){document.getElementById(i).value=''});
+    document.getElementById('fStatus').value='confirmado';document.getElementById('fOrigem').value='Airbnb';document.getElementById('fNumHosp').value=1;
+  }
+  document.getElementById('hospedeOverlay').classList.add('show');
+}
+function saveHospede(){
+  var nome=document.getElementById('fNome').value.trim();if(!nome){alert('Informe o nome.');return;}
+  var rawId=document.getElementById('fId').value;var hid=rawId!==''?Number(rawId):null;
+  var obj={nome:nome,tel:document.getElementById('fTel').value,email:document.getElementById('fEmail').value,
+    casa:document.getElementById('fCasa').value,status:document.getElementById('fStatus').value,
+    checkin:document.getElementById('fIn').value,checkout:document.getElementById('fOut').value,
+    valor:parseFloat(document.getElementById('fValor').value)||0,nota:parseInt(document.getElementById('fNota').value)||0,
+    obs:document.getElementById('fObs').value,origem:document.getElementById('fOrigem').value,
+    numHosp:parseInt(document.getElementById('fNumHosp').value)||1};
+  if(hid!=null){var idx=state.hospedes.findIndex(function(h){return Number(h.id)===hid});if(idx>=0)state.hospedes[idx]=Object.assign({},state.hospedes[idx],obj);}
+  else{obj.id=state.nextHid++;state.hospedes.push(obj);}
+  saveState();invalidarCacheOcupacao();closeOverlay('hospedeOverlay');renderLista();renderHospedeMetrics();renderCal();
+}
+function openDetail(hid){
+  var h=state.hospedes.find(function(x){return Number(x.id)===Number(hid)});if(!h)return;
+  var a=ac(h.id),d=diasEntre(h.checkin,h.checkout);
+  document.getElementById('detailContent').innerHTML=
+    '<div class="detail-avatar" style="background:'+a.bg+';color:'+a.text+'">'+initials(h.nome)+'</div>'
+    +'<div class="detail-name">'+h.nome+'</div>'
+    +'<div class="detail-sub">'+(h.email||'Sem e-mail')+' · '+(h.tel||'Sem telefone')+'</div>'
+    +'<table class="dtable">'
+    +'<tr><td class="dl">Casa</td><td class="dr">'+h.casa+'</td></tr>'
+    +'<tr><td class="dl">Status</td><td class="dr"><span class="badge '+SC[h.status]+'">'+SL[h.status]+'</span></td></tr>'
+    +'<tr><td class="dl">Origem</td><td class="dr"><span class="badge badge-orig">'+h.origem+'</span></td></tr>'
+    +'<tr><td class="dl">Nº hóspedes</td><td class="dr">'+h.numHosp+'</td></tr>'
+    +'<tr><td class="dl">Check-in</td><td class="dr">'+(h.checkin||'—')+'</td></tr>'
+    +'<tr><td class="dl">Check-out</td><td class="dr">'+(h.checkout||'—')+'</td></tr>'
+    +'<tr><td class="dl">Diárias</td><td class="dr">'+d+'</td></tr>'
+    +'<tr><td class="dl">Valor pago</td><td class="dr">'+(h.valor>0?fmt(h.valor):'—')+'</td></tr>'
+    +'<tr><td class="dl">Avaliação</td><td class="dr">'+(h.nota>0?'<span class="stars">'+stars(h.nota)+'</span>':'—')+'</td></tr>'
+    +'</table>'
+    +(h.obs?'<div class="obs-box">'+h.obs+'</div>':'')
+    +'<div class="modal-btns" style="margin-top:1rem">'
+    +'<button class="btn-cancel" onclick="closeOverlay(\'detailOverlay\')">Fechar</button>'
+    +'<button class="btn-save" data-hid="'+h.id+'" onclick="closeOverlay(\'detailOverlay\');openHospedeModal(Number(this.dataset.hid))">Editar</button>'
+    +'<button class="btn-danger" data-hid="'+h.id+'" onclick="deleteHospede(Number(this.dataset.hid))" aria-label="Apagar hóspede" title="Apagar">Apagar</button>'
+    +'</div>';
+  document.getElementById('detailOverlay').classList.add('show');
+}
+function deleteHospede(hid){
+  openConfirmModal('Apagar hóspede','Este hóspede e todos os seus dados serão removidos permanentemente.','Apagar',function(){
+    state.hospedes=state.hospedes.filter(function(h){return Number(h.id)!==Number(hid)});
+    saveState();invalidarCacheOcupacao();closeOverlay('detailOverlay');renderLista();renderHospedeMetrics();renderCal();
+  });
+}
+function exportCSV(){
+  var rows=[['Nome','Casa','Status','Origem','Check-in','Check-out','Diárias','Valor','Hóspedes','Avaliação','E-mail','Tel','Obs']];
+  state.hospedes.forEach(function(h){
+    rows.push([h.nome,h.casa,SL[h.status],h.origem||'',h.checkin||'',h.checkout||'',diasEntre(h.checkin,h.checkout),h.valor,h.numHosp||1,h.nota||'',h.email||'',h.tel||'',h.obs||'']);
+  });
+  var csv=rows.map(function(r){return r.map(function(v){return'"'+String(v).replace(/"/g,'""')+'"'}).join(',')}).join('\n');
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='hospedes-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+// ── TAREFAS ───────────────────────────────────────────────────
+function setTarefaFilter(f,el){state.tarefaFilter=f;document.querySelectorAll('#tarefaFilters .filter-btn').forEach(function(b){b.classList.remove('active')});el.classList.add('active');renderTarefas();}
+function addTarefa(){
+  var txt=document.getElementById('tTexto').value.trim();if(!txt)return;
+  state.tarefas.push({id:state.nextTid++,texto:txt,casa:document.getElementById('tCasa').value,prio:document.getElementById('tPrio').value,data:document.getElementById('tData').value,feita:false});
+  document.getElementById('tTexto').value='';document.getElementById('tData').value='';
+  saveState();renderTarefas();renderTarefaMetrics();
+}
+function toggleTarefa(tid){var t=state.tarefas.find(function(x){return Number(x.id)===Number(tid)});if(t)t.feita=!t.feita;saveState();renderTarefas();renderTarefaMetrics();}
+function openTarefaEdit(tid){
+  var t=state.tarefas.find(function(x){return Number(x.id)===Number(tid)});if(!t)return;
+  document.getElementById('tEditId').value=tid;document.getElementById('tEditTexto').value=t.texto;
+  document.getElementById('tEditCasa').value=t.casa;document.getElementById('tEditPrio').value=t.prio;document.getElementById('tEditData').value=t.data||'';
+  document.getElementById('tarefaEditOverlay').classList.add('show');
+}
+function saveTarefaEdit(){
+  var tid=Number(document.getElementById('tEditId').value);
+  var t=state.tarefas.find(function(x){return Number(x.id)===tid});if(!t)return;
+  t.texto=document.getElementById('tEditTexto').value.trim()||t.texto;
+  t.casa=document.getElementById('tEditCasa').value;t.prio=document.getElementById('tEditPrio').value;t.data=document.getElementById('tEditData').value;
+  saveState();closeOverlay('tarefaEditOverlay');renderTarefas();renderTarefaMetrics();
+}
+function deleteTarefa(tid){
+  openConfirmModal('Apagar tarefa','Esta tarefa será removida permanentemente.','Apagar',function(){
+    state.tarefas=state.tarefas.filter(function(t){return Number(t.id)!==Number(tid)});
+    saveState();renderTarefas();renderTarefaMetrics();
+  });
+}
+function renderTarefas(){
+  var f=state.tarefaFilter;
+  var list=state.tarefas.filter(function(t){
+    if(f==='pendentes')return!t.feita;if(f==='feitas')return t.feita;
+    if(f==='vencidas')return!t.feita&&t.data&&new Date(t.data+'T00:00:00')<hoje();
+    if(f==='todas')return true;return t.casa===f;
+  });
+  list.sort(function(a,b){var po={alta:0,media:1,baixa:2};if(a.feita!==b.feita)return a.feita?1:-1;return(po[a.prio]||1)-(po[b.prio]||1)});
+  if(!list.length){document.getElementById('tarefaLista').innerHTML='<div class="empty">Nenhuma tarefa encontrada.</div>';return;}
+  var agrupar=['todas','pendentes','feitas','vencidas'].indexOf(f)>=0;
+  var html='';
+  if(agrupar){
+    var g={};list.forEach(function(t){if(!g[t.casa])g[t.casa]=[];g[t.casa].push(t)});
+    Object.keys(g).forEach(function(casa){html+='<div class="tarefa-casa-label">'+casa+'</div>';html+=g[casa].map(function(t){return tarefaRow(t)}).join('')});
+  }else html=list.map(function(t){return tarefaRow(t)}).join('');
+  document.getElementById('tarefaLista').innerHTML=html;
+}
+function tarefaRow(t){
+  var venc=!t.feita&&t.data&&new Date(t.data+'T00:00:00')<hoje();
+  return'<div class="tarefa-row '+(t.feita?'feita':'')+'">'
+    +'<div class="tarefa-check '+(t.feita?'done':'')+'" data-tid="'+t.id+'" onclick="toggleTarefa(Number(this.dataset.tid))">'+(t.feita?'✓':'')+'</div>'
+    +'<div class="tarefa-body"><div class="tarefa-texto">'+t.texto
+    +(venc?'<span class="tarefa-vencida">Vencida</span>':'<span class="'+PC[t.prio]+'">'+PL[t.prio]+'</span>')+'</div>'
+    +'<div class="tarefa-meta">'+t.casa+(t.data?' · prazo: '+t.data:'')+'</div></div>'
+    +'<button class="icon-btn" data-tid="'+t.id+'" onclick="openTarefaEdit(Number(this.dataset.tid))" aria-label="Editar tarefa" title="Editar">✏</button>'
+    +'<button class="icon-btn del" data-tid="'+t.id+'" onclick="deleteTarefa(Number(this.dataset.tid))" aria-label="Apagar tarefa" title="Apagar">✕</button>'
+    +'</div>';
+}
+function renderTarefaMetrics(){
+  var vencidas=state.tarefas.filter(function(t){return!t.feita&&t.data&&new Date(t.data+'T00:00:00')<hoje()}).length;
+  var total=state.tarefas.length,feitas=state.tarefas.filter(function(t){return t.feita}).length,pend=total-feitas,altas=state.tarefas.filter(function(t){return t.prio==='alta'&&!t.feita}).length;
+  document.getElementById('tarefaMetrics').innerHTML=
+    '<div class="metric"><div class="label">Total</div><div class="value">'+total+'</div></div>'
+    +'<div class="metric"><div class="label">Pendentes</div><div class="value '+(pend>0?'down':'')+'">'+pend+'</div></div>'
+    +'<div class="metric"><div class="label">Concluídas</div><div class="value up">'+feitas+'</div></div>'
+    +'<div class="metric"><div class="label">Alta prioridade</div><div class="value '+(altas>0?'down':'')+'">'+altas+'</div></div>'
+    +'<div class="metric"><div class="label">Vencidas</div><div class="value '+(vencidas>0?'down':'')+'">'+vencidas+'</div></div>';
+}
+
+// ── RESUMO ────────────────────────────────────────────────────
+function resumoMes(delta){state.resumoMes+=delta;if(state.resumoMes<0){state.resumoMes=11;state.resumoAno--;}if(state.resumoMes>11){state.resumoMes=0;state.resumoAno++;}saveState();renderResumo();}
+function selectResumoHouse(n,el){state.resumoHouse=n;document.querySelectorAll('#resumoHouseSel .house-btn').forEach(function(b){b.classList.remove('active')});el.classList.add('active');renderResumo();}
+function renderResumo(){
+  var ano=state.resumoAno,mes=state.resumoMes,hf=state.resumoHouse;
+  var casas=getCasas();
+  document.getElementById('resumoTitle').textContent=fmtMes(ano,mes);
+  var rec=getReceitas(ano,mes),ocup=getOcupacao(ano,mes),custosMes=getCustosMes(ano,mes);
+  var totalDias=diasNoMes(ano,mes);
+  var casasList=hf===0?casas.map(function(_,i){return i}):[hf-1];
+  var totRec=casasList.reduce(function(s,i){return s+(rec[i]||0)},0);
+  var totCusto=casasList.reduce(function(s,i){return s+custosMes.filter(function(c){return c.casa===i}).reduce(function(ss,c){return ss+c.valor},0)},0);
+  var comissaoMes=Math.round(totRec*0.20);
+  var saldoMes=totRec-totCusto;
+  // Saldo total acumulado
+  var saldoTotal=0;
+  Object.keys(state.receitasMes).forEach(function(k){
+    var rr=state.receitasMes[k];
+    var totR=casasList.reduce(function(s,i){return s+(rr[i]||0)},0);
+    var cc=state.custos.filter(function(c){return c.data===k&&casasList.indexOf(c.casa)>=0}).reduce(function(s,c){return s+c.valor},0);
+    saldoTotal+=totR-cc;
+  });
+  var html='';
+  html+='<div class="metrics" style="margin-bottom:1.5rem">'
+    +'<div class="metric"><div class="label">Faturamento</div><div class="value">'+fmt(totRec)+'</div><div class="sub">do mês</div></div>'
+    +'<div class="metric"><div class="label">Custos</div><div class="value">'+fmt(totCusto)+'</div><div class="sub down">'+(totRec>0?Math.round(totCusto/totRec*100):0)+'%</div></div>'
+    +'<div class="metric"><div class="label">Comissões (20%)</div><div class="value down">'+fmt(comissaoMes)+'</div><div class="sub down">sobre receita bruta</div></div>'
+    +'<div class="metric"><div class="label">Saldo do mês</div><div class="value '+(saldoMes>=0?'up':'down')+'">'+fmt(saldoMes)+'</div></div>'
+    +'<div class="metric"><div class="label">Saldo acumulado</div><div class="value '+(saldoTotal>=0?'up':'down')+'">'+fmt(saldoTotal)+'</div><div class="sub">todos os meses</div></div>'
+    +'</div>';
+  // Ocupação
+  html+='<div class="card"><div class="resumo-section-title">Ocupação — '+fmtMes(ano,mes)+'</div>';
+  casasList.forEach(function(i){
+    var diasOcup=ocup[i]||0,diasVac=totalDias-diasOcup,pct=Math.round(diasOcup/totalDias*100),cor=pct>=BENCHMARK_OCUPACAO?'#639922':pct>=40?'#BA7517':'#E24B4A';
+    html+='<div class="resumo-row"><span style="color:var(--text2)">'+(casas[i]?casas[i].nome:'—')+'</span>'
+      +'<span style="display:flex;gap:16px;font-size:13px"><span style="color:#3B6D11">'+diasOcup+' ocupados</span><span style="color:var(--text3)">'+diasVac+' vagos</span><span style="font-weight:500">'+pct+'%</span></span></div>'
+      +'<div class="progbar" style="margin-bottom:8px"><div class="progfill" style="width:'+pct+'%;background:'+cor+'"></div></div>';
+  });
+  html+='</div>';
+  // Receitas por casa com comissão individual
+  html+='<div class="card"><div class="resumo-section-title">Faturamento por casa</div>';
+  casasList.forEach(function(i){
+    var recCasa=rec[i]||0;
+    var comCasa=Math.round(recCasa*0.20);
+    html+='<div class="resumo-row">'
+      +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+(casas[i]?casas[i].cor:'#888')+';margin-right:6px;vertical-align:middle"></span>'+(casas[i]?casas[i].nome:'—')+'</span>'
+      +'<span style="display:flex;gap:16px">'
+      +'<span style="font-weight:500">'+fmt(recCasa)+'</span>'
+      +(recCasa>0?'<span style="font-size:12px;color:#A32D2D" title="Comissão 20%">−'+fmt(comCasa)+' comissão</span>':'')
+      +'</span></div>';
+  });
+  html+='<div class="resumo-row total"><span>Total</span><span>'+fmt(totRec)+'</span></div></div>';
+  // Custos
+  html+='<div class="card"><div class="resumo-section-title">Custos detalhados</div>';
+  var grupos={};
+  custosMes.filter(function(c){return casasList.indexOf(c.casa)>=0}).forEach(function(c){if(!grupos[c.nome])grupos[c.nome]=0;grupos[c.nome]+=c.valor;});
+  if(!Object.keys(grupos).length) html+='<div class="empty" style="padding:.5rem 0">Nenhum custo neste mês.</div>';
+  Object.keys(grupos).forEach(function(nome){html+='<div class="resumo-row"><span style="color:var(--text2)">'+nome+'</span><span style="font-weight:500">'+fmt(grupos[nome])+'</span></div>';});
+  html+='<div class="resumo-row total"><span>Total de custos</span><span style="color:#A32D2D">'+fmt(totCusto)+'</span></div></div>';
+  // Saldo
+  html+='<div class="card"><div class="resumo-section-title">Saldo</div>'
+    +'<div class="resumo-row"><span style="color:var(--text2)">Faturamento</span><span style="font-weight:500">'+fmt(totRec)+'</span></div>'
+    +'<div class="resumo-row"><span style="color:var(--text2)">(-) Custos</span><span style="font-weight:500;color:#A32D2D">'+fmt(totCusto)+'</span></div>'
+    +'<div class="resumo-row"><span style="color:var(--text2)">(-) Comissões (20%)</span><span style="font-weight:500;color:#A32D2D">'+fmt(comissaoMes)+'</span></div>'
+    +'<div class="resumo-row '+(saldoMes>=0?'saldo-pos':'saldo-neg')+'"><span>= Saldo do mês</span><span>'+fmt(saldoMes)+'</span></div>'
+    +'<div style="margin-top:12px;padding-top:12px;border-top:.5px solid var(--border);display:flex;justify-content:space-between;font-size:14px;font-weight:500;color:'+(saldoTotal>=0?'#3B6D11':'#A32D2D')+'">'
+    +'<span>Saldo total acumulado</span><span>'+fmt(saldoTotal)+'</span></div></div>';
+  document.getElementById('resumoConteudo').innerHTML=html;
+}
+function exportResumoCSV(){
+  var casas=getCasas(),hf=state.resumoHouse;
+  var casasList=hf===0?casas.map(function(_,i){return i}):[hf-1];
+  var rows=[['Mês','Casa','Receita','Custos','Saldo','Dias ocupados','Ocupação %']];
+  var meses=Object.keys(state.receitasMes).sort();
+  meses.forEach(function(k){
+    var parts=k.split('-');var ano=parseInt(parts[0]),mesIdx=parseInt(parts[1])-1;
+    var rec=getReceitas(ano,mesIdx);var ocup=getOcupacao(ano,mesIdx);var custos=getCustosMes(ano,mesIdx);
+    casasList.forEach(function(i){
+      if(!casas[i])return;
+      var c=custos.filter(function(cu){return cu.casa===i}).reduce(function(s,cu){return s+cu.valor},0);
+      rows.push([MESES[mesIdx]+' '+ano,casas[i].nome,rec[i]||0,c,(rec[i]||0)-c,ocup[i]||0,Math.round((ocup[i]||0)/diasNoMes(ano,mesIdx)*100)+'%']);
+    });
+  });
+  var csv=rows.map(function(r){return r.map(function(v){return'"'+String(v).replace(/"/g,'""')+'"'}).join(',')}).join('\n');
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='resumo-financeiro.csv';a.click();
+}
+
+// ── ANÁLISE ───────────────────────────────────────────────────
+var chartAnualInst=null,chartPizzaInst=null,chartOrigemInst=null;
+function renderAnalise(){
+  var casas=getCasas(),hf=state.analiseHouse;
+  // Últimos 12 meses
+  var meses12=[];var labels=[];
+  for(var i=11;i>=0;i--){var m=hoje().getMonth()-i,a=hoje().getFullYear();while(m<0){m+=12;a--;}meses12.push({ano:a,mes:m});labels.push(MESES[m].slice(0,3)+'/'+String(a).slice(2));}
+  var casasList=hf===0?casas.map(function(_,idx){return idx}):[hf-1];
+  var recData=meses12.map(function(m){return casasList.reduce(function(s,i){return s+(getReceitas(m.ano,m.mes)[i]||0)},0)});
+  var custoData=meses12.map(function(m){return casasList.reduce(function(s,i){return s+getCustosMes(m.ano,m.mes).filter(function(c){return c.casa===i}).reduce(function(ss,c){return ss+c.valor},0)},0)});
+  // Gráfico anual
+  var ctx=document.getElementById('chartAnual');if(chartAnualInst)chartAnualInst.destroy();
+  chartAnualInst=new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[
+    {label:'Receita',data:recData,backgroundColor:'#378ADD55',borderColor:'#378ADD',borderWidth:1.5,borderRadius:4},
+    {label:'Custos',data:custoData,backgroundColor:'#E24B4A55',borderColor:'#E24B4A',borderWidth:1.5,borderRadius:4}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return'R$'+Math.round(v/1000)+'k'},font:{size:11}},grid:{color:'rgba(128,128,128,.1)'}},x:{ticks:{font:{size:10}},grid:{display:false}}}}});
+  // Pizza de custos
+  var gruposCusto={};
+  meses12.forEach(function(m){casasList.forEach(function(i){getCustosMes(m.ano,m.mes).filter(function(c){return c.casa===i}).forEach(function(c){gruposCusto[c.nome]=(gruposCusto[c.nome]||0)+c.valor})})});
+  var pizzaLabels=Object.keys(gruposCusto);var pizzaData=pizzaLabels.map(function(k){return gruposCusto[k]});
+  var pizzaCores=['#378ADD','#1D9E75','#D85A30','#7F77DD','#D4537E','#BA7517','#E24B4A'];
+  var ctx2=document.getElementById('chartCustosPizza');if(chartPizzaInst)chartPizzaInst.destroy();
+  if(pizzaData.length){
+    chartPizzaInst=new Chart(ctx2,{type:'doughnut',data:{labels:pizzaLabels,datasets:[{data:pizzaData,backgroundColor:pizzaCores.slice(0,pizzaLabels.length),borderWidth:2,borderColor:getComputedStyle(document.documentElement).getPropertyValue('--bg')||'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+    var totPizza=pizzaData.reduce(function(a,b){return a+b},0);
+    document.getElementById('custosPizzaLegend').innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px">'+pizzaLabels.map(function(l,i){return'<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><span style="width:10px;height:10px;border-radius:2px;background:'+pizzaCores[i]+';flex-shrink:0"></span>'+l+' '+Math.round(pizzaData[i]/totPizza*100)+'%</span>'}).join('')+'</div>';
+  }
+  // Origem reservas
+  var origens={};
+  state.hospedes.filter(function(h){return h.status==='confirmado'&&(hf===0||casas[hf-1]&&h.casa===casas[hf-1].nome)}).forEach(function(h){origens[h.origem||'Outro']=(origens[h.origem||'Outro']||0)+1});
+  var oLabels=Object.keys(origens);var oData=oLabels.map(function(k){return origens[k]});
+  var ctx3=document.getElementById('chartOrigem');if(chartOrigemInst)chartOrigemInst.destroy();
+  if(oData.length){
+    chartOrigemInst=new Chart(ctx3,{type:'doughnut',data:{labels:oLabels,datasets:[{data:oData,backgroundColor:pizzaCores.slice(0,oLabels.length),borderWidth:2,borderColor:getComputedStyle(document.documentElement).getPropertyValue('--bg')||'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+    var totO=oData.reduce(function(a,b){return a+b},0);
+    document.getElementById('origemLegend').innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px">'+oLabels.map(function(l,i){return'<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><span style="width:10px;height:10px;border-radius:2px;background:'+pizzaCores[i]+';flex-shrink:0"></span>'+l+' '+oData[i]+' ('+Math.round(oData[i]/totO*100)+'%)</span>'}).join('')+'</div>';
+  } else document.getElementById('origemLegend').innerHTML='<div class="empty">Nenhuma reserva confirmada.</div>';
+  // Projeção com variação sazonal: peso baseado no mesmo mês do ano anterior
+  var prox3=[];
+  for(var j=1;j<=3;j++){var pm=hoje().getMonth()+j,pa=hoje().getFullYear();while(pm>11){pm-=12;pa++;}prox3.push({ano:pa,mes:pm});}
+  var ult3=[];
+  for(var j2=3;j2>=1;j2--){var pm2=hoje().getMonth()-j2,pa2=hoje().getFullYear();while(pm2<0){pm2+=12;pa2--;}ult3.push({ano:pa2,mes:pm2});}
+  var mediaRec=Math.round(ult3.reduce(function(s,m){return s+casasList.reduce(function(ss,i){return ss+(getReceitas(m.ano,m.mes)[i]||0)},0)},0)/3);
+  var mediaCusto=Math.round(ult3.reduce(function(s,m){return s+casasList.reduce(function(ss,i){return ss+getCustosMes(m.ano,m.mes).filter(function(c){return c.casa===i}).reduce(function(sss,c){return sss+c.valor},0)},0)},0)/3);
+  // Pesos sazonais por mês (jan=1.0 base, verao/feriados maiores)
+  var pesoSazonal=[0.85,0.80,0.90,1.10,0.85,0.80,0.75,1.20,0.90,0.95,1.00,1.15];
+  var html='<p style="font-size:12px;color:var(--text3);margin-bottom:12px">Estimativa baseada na média dos últimos 3 meses com ajuste sazonal. Valores são projeções, não garantias.</p>';
+  html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:4px">';
+  prox3.forEach(function(m){
+    var peso=pesoSazonal[m.mes];
+    var recProj=Math.round(mediaRec*peso);
+    var custoProj=Math.round(mediaCusto*peso);
+    var saldoProj=recProj-custoProj;
+    var diasOcup=Math.round(diasNoMes(m.ano,m.mes)*(BENCHMARK_OCUPACAO/100));
+    var corSaldo=saldoProj>=0?'#3B6D11':'#A32D2D';
+    html+='<div style="background:var(--bg2);border-radius:var(--radius);padding:.85rem 1rem">'
+      +'<div style="font-size:13px;font-weight:500;margin-bottom:8px">'+MESES[m.mes]+' '+m.ano+'</div>'
+      +'<div style="font-size:12px;color:var(--text2);margin-bottom:3px">Receita: <strong style="color:var(--text)">'+fmt(recProj)+'</strong></div>'
+      +'<div style="font-size:12px;color:var(--text2);margin-bottom:3px">Custos: <strong style="color:#A32D2D">'+fmt(custoProj)+'</strong></div>'
+      +'<div style="font-size:13px;font-weight:500;color:'+corSaldo+';margin-bottom:6px">Saldo: '+fmt(saldoProj)+'</div>'
+      +'<div class="progbar" style="margin-top:4px"><div class="progfill" style="width:'+(peso*70)+'%;background:'+corSaldo+'"></div></div>'
+      +'<div style="font-size:10px;color:var(--text3);margin-top:4px">~'+diasOcup+' dias · fator sazonal '+(peso>=1?'+':'')+Math.round((peso-1)*100)+'%</div>'
+      +'</div>';
+  });
+  html+='</div>';
+  document.getElementById('projecao').innerHTML=html;
+  // Benchmark
+  var bInput=document.getElementById('benchmarkInput');
+  if(bInput) bInput.value=BENCHMARK_OCUPACAO;
+  renderBenchmarkSection();
+}
+
+function updateBenchmark(val){
+  var n=Math.max(1,Math.min(100,parseInt(val)||65));
+  state.benchmarkOcupacao=n;
+  BENCHMARK_OCUPACAO=n;
+  saveState();
+  renderOcupacaoVisao();
+  renderBenchmarkSection();
+}
+
+function renderBenchmarkSection(){
+  var casas=getCasas(),hf=state.analiseHouse;
+  var casasList=hf===0?casas.map(function(_,i){return i}):[hf-1];
+  var agora=hoje();
+  var benchHtml='';
+  casasList.forEach(function(i){
+    if(!casas[i])return;
+    var ocupAtual=getOcupacao(agora.getFullYear(),agora.getMonth());
+    var pct=Math.round((ocupAtual[i]||0)/diasNoMes(agora.getFullYear(),agora.getMonth())*100);
+    var cor=pct>=BENCHMARK_OCUPACAO?'#639922':pct>=40?'#BA7517':'#E24B4A';
+    var diff=pct-BENCHMARK_OCUPACAO;
+    benchHtml+='<div style="margin-bottom:14px">'
+      +'<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">'
+      +'<span>'+casas[i].nome+'</span>'
+      +'<span style="color:'+cor+';font-weight:500">'+pct+'% <span style="font-weight:400;font-size:12px;color:var(--text2)">(meta: '+BENCHMARK_OCUPACAO+'% · '+(diff>=0?'+':'')+diff+'pp)</span></span>'
+      +'</div>'
+      +'<div class="benchmark-bar"><div class="progfill" style="width:'+Math.min(pct,100)+'%;background:'+cor+';height:10px;border-radius:5px"></div>'
+      +'<div class="benchmark-marker" style="left:'+Math.min(BENCHMARK_OCUPACAO,100)+'%"></div></div></div>';
+  });
+  document.getElementById('benchmark').innerHTML=benchHtml||'<div class="empty">Nenhum imóvel selecionado.</div>';
+}
+
+// ── IMÓVEIS ───────────────────────────────────────────────────
+function renderImoveis(){
+  var casas=getCasas();
+  document.getElementById('imoveisCount').textContent=casas.length+' imóvel'+(casas.length!==1?'is':'');
+  var container=document.getElementById('imoveisList');
+  if(!casas.length){container.innerHTML='<div class="empty">Nenhum imóvel cadastrado.</div>';return;}
+  container.innerHTML='';
+  casas.forEach(function(c){
+    var emoji=TIPO_EMOJI[c.tipo]||'🏠';
+    var card=document.createElement('div');card.className='imovel-card';
+    var icon=document.createElement('div');icon.className='imovel-icon';icon.style.cssText='background:'+c.cor+'22;font-size:22px';icon.textContent=emoji;
+    var info=document.createElement('div');info.className='imovel-info';
+    var nome=document.createElement('div');nome.className='imovel-nome';nome.textContent=c.nome;
+    var meta=document.createElement('div');meta.className='imovel-meta';
+    meta.textContent=(c.tipo||'')+(c.local?' · '+c.local:'')+(c.quartos?' · '+c.quartos+' quartos':'')+' · até '+c.capacidade+' pessoas'+(c.diaria?' · diária: '+fmt(c.diaria):'');
+    info.appendChild(nome);info.appendChild(meta);
+    if(c.obs){var obs=document.createElement('div');obs.style.cssText='font-size:11px;color:var(--text3);margin-top:3px';obs.textContent=c.obs;info.appendChild(obs);}
+    var actions=document.createElement('div');actions.className='imovel-actions';
+    var btnE=document.createElement('button');btnE.className='icon-btn';btnE.title='Editar';btnE.textContent='✏';
+    btnE.addEventListener('click',(function(cid){return function(){openImovelModal(Number(cid))}})(c.id));
+    var btnD=document.createElement('button');btnD.className='icon-btn del';btnD.title='Remover';btnD.textContent='✕';
+    btnD.addEventListener('click',(function(cid){return function(){deleteImovel(Number(cid))}})(c.id));
+    actions.appendChild(btnE);actions.appendChild(btnD);
+    card.appendChild(icon);card.appendChild(info);card.appendChild(actions);
+    container.appendChild(card);
+  });
+}
+function openImovelModal(imId){
+  imId=imId!=null?Number(imId):null;
+  document.getElementById('imId').value=imId!=null?String(imId):'';
+  if(imId!=null){
+    var c=state.imoveis.find(function(x){return Number(x.id)===imId});if(!c)return;
+    document.getElementById('imovelModalTitle').textContent='Editar imóvel';
+    document.getElementById('imNome').value=c.nome;document.getElementById('imLocal').value=c.local||'';
+    document.getElementById('imTipo').value=c.tipo||'Casa';document.getElementById('imCor').value=c.cor||'#378ADD';
+    document.getElementById('imQuartos').value=c.quartos||'';document.getElementById('imCapacidade').value=c.capacidade||'';
+    document.getElementById('imDiaria').value=c.diaria||'';
+    document.getElementById('imIcal').value=c.icalUrl||'';
+    document.getElementById('imObs').value=c.obs||'';
+  }else{
+    document.getElementById('imovelModalTitle').textContent='Novo imóvel';
+    ['imNome','imLocal','imQuartos','imCapacidade','imDiaria','imIcal','imObs'].forEach(function(fid){document.getElementById(fid).value=''});
+    document.getElementById('imTipo').value='Casa';document.getElementById('imCor').value='#378ADD';
+  }
+  document.getElementById('imovelOverlay').classList.add('show');
+}
+function saveImovel(){
+  var nome=document.getElementById('imNome').value.trim();if(!nome){alert('Informe o nome.');return;}
+  var rawId=document.getElementById('imId').value;var imId=rawId!==''?Number(rawId):null;
+  var novoIcal=document.getElementById('imIcal').value.trim();
+  var obj={nome:nome,local:document.getElementById('imLocal').value.trim(),tipo:document.getElementById('imTipo').value,
+    cor:document.getElementById('imCor').value,quartos:parseInt(document.getElementById('imQuartos').value)||0,
+    capacidade:parseInt(document.getElementById('imCapacidade').value)||1,diaria:parseFloat(document.getElementById('imDiaria').value)||0,
+    icalUrl:novoIcal,obs:document.getElementById('imObs').value.trim()};
+  if(imId!=null){
+    var idx=state.imoveis.findIndex(function(x){return Number(x.id)===imId});
+    if(idx>=0){
+      var nomeAntigo=state.imoveis[idx].nome;
+      // Se link iCal mudou, limpar cache
+      if(state.imoveis[idx].icalUrl!==novoIcal){
+        Object.keys(_icalCache).forEach(function(k){if(k.startsWith(imId+'_'))delete _icalCache[k];});
+      }
+      state.imoveis[idx]=Object.assign({},state.imoveis[idx],obj);
+      if(nomeAntigo!==nome){
+        state.hospedes.forEach(function(h){if(h.casa===nomeAntigo)h.casa=nome});
+        state.tarefas.forEach(function(t){if(t.casa===nomeAntigo)t.casa=nome});
+      }
+    }
+  }else{obj.id=state.nextImId++;state.imoveis.push(obj);}
+  saveState();closeOverlay('imovelOverlay');rebuildAllSelects();renderImoveis();
+}
+function deleteImovel(imId){
+  imId=Number(imId);
+  if(state.imoveis.length<=1){
+    openConfirmModal('Não é possível remover','É necessário ter pelo menos 1 imóvel cadastrado.','Ok',function(){});
+    return;
+  }
+  var c=state.imoveis.find(function(x){return Number(x.id)===imId});
+  if(!c){return;}
+  openConfirmModal(
+    'Remover "'+c.nome+'"',
+    'O imóvel será removido dos filtros. Dados históricos de receitas, custos e hóspedes são preservados.',
+    'Remover',
+    function(){
+      state.imoveis=state.imoveis.filter(function(x){return Number(x.id)!==imId});
+      if(state.houseFilter>=state.imoveis.length+1) state.houseFilter=0;
+      saveState();rebuildAllSelects();renderImoveis();
+    }
+  );
+}
+
+// ── Importação do Airbnb ──────────────────────────────────────
+var _airbnbImportBuffer=[]; // reservas pendentes de importação
+
+function importarDoAirbnb(){
+  var casas=getCasas().filter(function(c){return c.icalUrl;});
+  if(!casas.length){
+    alert('Nenhum imóvel tem link iCal configurado.\nAdicione o link na aba Imóveis.');
+    return;
+  }
+
+  document.getElementById('airbnbImportLista').innerHTML=
+    '<div style="text-align:center;padding:1.5rem;color:var(--text3);font-size:13px">🔄 Carregando reservas do Airbnb...</div>';
+  document.getElementById('airbnbImportOverlay').classList.add('show');
+
+  // Buscar todos os iCals — períodos de 6 meses (passado + futuro)
+  var hoje=new Date();
+  var todosPeriodos=[];
+  var casasPendentes=casas.length;
+
+  casas.forEach(function(casa){
+    // Buscar 3 meses passados + 3 futuros para ter cobertura ampla
+    var mesesBuscar=[];
+    for(var i=-2;i<=4;i++){
+      var m=hoje.getMonth()+i,a=hoje.getFullYear();
+      while(m<0){m+=12;a--;}while(m>11){m-=12;a++;}
+      mesesBuscar.push({ano:a,mes:m});
+    }
+
+    var periodosCasa=[];
+    var mesesPendentes=mesesBuscar.length;
+
+    mesesBuscar.forEach(function(mv){
+      var ckey=casa.id+'_'+mv.ano+'_'+mv.mes;
+      // Usar cache se disponível, senão buscar
+      if(_icalCache[ckey]&&(Date.now()-_icalCache[ckey].ts)<1800000){
+        // Precisamos dos períodos completos, não só diasDoMes
+        // Rebuscar o ical completo se não tiver cache de periodos completos
+      }
+
+      var proxies=[
+        'https://api.allorigins.win/get?url=',
+        'https://corsproxy.io/?',
+        'https://api.codetabs.com/v1/proxy?quest='
+      ];
+
+      function tentarProxy(idx){
+        if(idx>=proxies.length){
+          if(--mesesPendentes===0){
+            adicionarPeriodosCasa(casa,periodosCasa);
+            if(--casasPendentes===0) mostrarImportModal(todosPeriodos);
+          }
+          return;
+        }
+        fetch(proxies[idx]+encodeURIComponent(casa.icalUrl))
+          .then(function(r){if(!r.ok)throw new Error();return r.text();})
+          .then(function(txt){
+            var icsText=txt;
+            if(txt.trim().startsWith('{')){try{icsText=JSON.parse(txt).contents||txt;}catch(e){}}
+            if(!icsText.includes('BEGIN:VCALENDAR'))throw new Error();
+            periodosCasa=parseIcal(icsText); // períodos completos
+            // Atualizar todos os caches de mês
+            mesesBuscar.forEach(function(mv){
+              var ckey=casa.id+'_'+mv.ano+'_'+mv.mes;
+              _icalCache[ckey]={ts:Date.now(),dias:icalDiasDoMes(periodosCasa,mv.ano,mv.mes)};
+            });
+            // Também atualizar _airbnbDias para o mês atual
+            if(_airbnbDias[casa.nome]===undefined)_airbnbDias[casa.nome]={};
+            var k=casa.id+'_'+state.calAno+'_'+state.calMes;
+            if(_icalCache[k])_airbnbDias[casa.nome]=_icalCache[k].dias;
+            mesesPendentes=0; // já temos tudo
+            adicionarPeriodosCasa(casa,periodosCasa);
+            if(--casasPendentes===0) mostrarImportModal(todosPeriodos);
+          })
+          .catch(function(){tentarProxy(idx+1);});
+      }
+      if(mesesPendentes>0){tentarProxy(0);mesesPendentes=-999;}// flag para não repetir
+    });
+
+    // Se não havia nenhum para buscar (cache ok), usar periodsDoCache
+    if(mesesPendentes===-999)return;
+    // fallback: tentar direto
+    tentarProxyParaCasa(casa);
+
+    function tentarProxyParaCasa(c){
+      var proxies=['https://api.allorigins.win/get?url=','https://corsproxy.io/?','https://api.codetabs.com/v1/proxy?quest='];
+      function t(i){
+        if(i>=proxies.length){if(--casasPendentes===0)mostrarImportModal(todosPeriodos);return;}
+        fetch(proxies[i]+encodeURIComponent(c.icalUrl))
+          .then(function(r){if(!r.ok)throw new Error();return r.text();})
+          .then(function(txt){
+            var icsText=txt;
+            if(txt.trim().startsWith('{')){try{icsText=JSON.parse(txt).contents||txt;}catch(e){}}
+            if(!icsText.includes('BEGIN:VCALENDAR'))throw new Error();
+            adicionarPeriodosCasa(c,parseIcal(icsText));
+            if(--casasPendentes===0)mostrarImportModal(todosPeriodos);
+          })
+          .catch(function(){t(i+1);});
+      }
+      t(0);
+    }
+
+    function adicionarPeriodosCasa(c,periodos){
+      periodos.forEach(function(p){
+        todosPeriodos.push({casa:c,periodo:p});
+      });
+    }
+  });
+}
+
+function mostrarImportModal(todosPeriodos){
+  // Filtrar apenas reservas futuras ou em andamento (não bloqueios antigos)
+  var agora=new Date();agora.setHours(0,0,0,0);
+  var futuras=todosPeriodos.filter(function(item){
+    return item.periodo.end>=agora;
+  });
+  // Ordenar por data
+  futuras.sort(function(a,b){return a.periodo.start-b.periodo.start;});
+  // Remover duplicatas (mesmo período e casa)
+  var vistos={};
+  futuras=futuras.filter(function(item){
+    var k=item.casa.nome+'_'+item.periodo.start.toISOString().slice(0,10)+'_'+item.periodo.end.toISOString().slice(0,10);
+    if(vistos[k])return false;vistos[k]=true;return true;
+  });
+
+  if(!futuras.length){
+    document.getElementById('airbnbImportLista').innerHTML=
+      '<div class="empty">Nenhuma reserva futura encontrada nos calendários do Airbnb.</div>';
+    return;
+  }
+
+  // Verificar quais já existem (mesmo checkin + casa + origem Airbnb)
+  var existentes={};
+  state.hospedes.forEach(function(h){
+    if(h.origem==='Airbnb')existentes[h.casa+'_'+h.checkin]=true;
+  });
+
+  _airbnbImportBuffer=futuras;
+
+  var html='<div style="max-height:400px;overflow-y:auto">';
+  futuras.forEach(function(item,idx){
+    var ci=item.periodo.start.toISOString().slice(0,10);
+    var co=item.periodo.end.toISOString().slice(0,10);
+    var nd=Math.round((item.periodo.end-item.periodo.start)/86400000);
+    var jaExiste=existentes[item.casa.nome+'_'+ci];
+    var disabled=jaExiste?'opacity:.5;pointer-events:none':'';
+    html+='<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:.5px solid var(--border);'+disabled+'">'
+      +'<input type="checkbox" id="ab_'+idx+'" '+(jaExiste?'':'checked')+' style="width:16px;height:16px;flex-shrink:0"/>'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">'
+      +'<span style="font-size:12px;font-weight:500;background:#FFD8B0;color:#7A2E00;padding:2px 7px;border-radius:4px">'+item.casa.nome+'</span>'
+      +'<span style="font-size:12px;color:var(--text2)">'+ci+' → '+co+' ('+nd+' dias)</span>'
+      +(jaExiste?'<span style="font-size:11px;color:var(--text3)">já importado</span>':'')
+      +'</div>'
+      +'<input type="text" id="abNome_'+idx+'" value="'+(item.periodo.summary&&item.periodo.summary!=='Airbnb'?item.periodo.summary:'Hóspede Airbnb')+'" placeholder="Nome do hóspede" style="width:100%;font-size:13px;padding:5px 8px;border-radius:var(--radius);border:.5px solid var(--border2);background:var(--bg);color:var(--text)"/>'
+      +'</div>'
+      +'</div>';
+  });
+  html+='</div>';
+  document.getElementById('airbnbImportLista').innerHTML=html;
+}
+
+function confirmarImportacaoAirbnb(){
+  var importados=0;
+  _airbnbImportBuffer.forEach(function(item,idx){
+    var cb=document.getElementById('ab_'+idx);
+    if(!cb||!cb.checked)return;
+    var nomeInput=document.getElementById('abNome_'+idx);
+    var nome=nomeInput?nomeInput.value.trim()||'Hóspede Airbnb':'Hóspede Airbnb';
+    var ci=item.periodo.start.toISOString().slice(0,10);
+    var co=item.periodo.end.toISOString().slice(0,10);
+    // Verificar duplicata
+    var jaExiste=state.hospedes.some(function(h){return h.origem==='Airbnb'&&h.casa===item.casa.nome&&h.checkin===ci;});
+    if(jaExiste)return;
+    state.hospedes.push({
+      id:state.nextHid++,
+      nome:nome,
+      tel:'',email:'',
+      casa:item.casa.nome,
+      status:'confirmado',
+      checkin:ci,
+      checkout:co,
+      valor:0,nota:0,
+      origem:'Airbnb',
+      numHosp:1,
+      obs:'',
+      nomeProvisorio:true // flag para indicar que o nome pode ser provisório
+    });
+    importados++;
+  });
+
+  if(importados>0){
+    saveState();
+    invalidarCacheOcupacao();
+    renderLista();
+    renderHospedeMetrics();
+    renderCal();
+  }
+  closeOverlay('airbnbImportOverlay');
+  if(importados>0)alert(importados+' reserva(s) importada(s) com sucesso!\n\nLembre-se de editar o nome do hóspede quando souber.');
+}
+
+
+(async function(){
+  // 1. Tentar carregar dados do Supabase
+  document.getElementById('saveBadge').textContent='☁ Conectando...';
+  var remoto=await sbLoad();
+  if(remoto){
+    // garantir campos novos no estado remoto
+    if(!remoto.imoveis||!remoto.imoveis.length) remoto.imoveis=JSON.parse(JSON.stringify(DEF.imoveis));
+    remoto.imoveis.forEach(function(im){if(!im.icalUrl)im.icalUrl='';});
+    if(!remoto.gargalosExtras) remoto.gargalosExtras=[];
+    if(!remoto.nextGid) remoto.nextGid=1;
+    state=remoto;
+    try{localStorage.setItem('aluguel_v6',JSON.stringify(state));}catch(e){}
+    document.getElementById('saveBadge').textContent='☁ Dados carregados';
+  }else{
+    // Primeira vez no Supabase — subir dados locais
+    document.getElementById('saveBadge').textContent='💾 Dados carregados';
+    sbSave(state);
+  }
+
+  // 2. Renderizar UI imediatamente
+  rebuildAllSelects();
+  rebuildHouseSel();
+  renderVisao();
+  renderNotificacoes();
+
+  // 3. Carregar iCal em background e atualizar calendário + ocupação
+  carregarAirbnb(getCasas(),state.calAno,state.calMes,function(r){
+    _airbnbDias=r;
+    renderCal();
+    renderOcupacaoVisao();
+    renderGargalos();
+  });
+})();
+</script>
+</body>
+</html>
